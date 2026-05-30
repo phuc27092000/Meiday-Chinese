@@ -16,9 +16,9 @@ body{font-family:'Be Vietnam Pro',sans-serif;background:var(--cream);color:var(-
 .logo-text{color:white;font-size:20px;font-weight:700;letter-spacing:-0.5px}
 .logo-sub{color:rgba(255,255,255,0.7);font-size:11px;font-weight:400}
 .level-tabs{display:flex;gap:6px}
-.level-tab{padding:7px 18px;border:2px solid rgba(255,255,255,0.25);border-radius:20px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:rgba(255,255,255,0.7);background:transparent;transition:all 0.2s}
-.level-tab:hover{border-color:rgba(255,255,255,0.5);color:white}
-.level-tab.active{background:white;color:var(--red);border-color:white}
+
+
+.header-badge{background:rgba(255,255,255,0.15);color:white;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;backdrop-filter:blur(10px)}
 .nav{background:white;border-bottom:1px solid var(--border);box-shadow:var(--shadow);position:sticky;top:68px;z-index:99}
 .nav-inner{max-width:960px;margin:0 auto;display:flex;gap:4px;padding:10px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .nav-inner::-webkit-scrollbar{display:none}
@@ -160,18 +160,18 @@ function getTotal(arr){return arr.reduce((s,l)=>s+l.words.length,0)}
 
 function render(){
   const app=document.getElementById('app');
-  app.innerHTML=renderHeader()+renderNav()+'<div class="main">'+(state.view==='home'?renderHome():renderLesson())+'</div>';
+  app.innerHTML=renderHeader()+renderNav()+'<div class="main">'+(state.view==='home'?renderHome():state.view==='level'?renderLevel():renderLesson())+'</div>';
   attachEvents();
 }
 
 function renderHeader(){
-  return '<div class="header"><div class="header-inner"><div class="logo"><div class="logo-icon">每</div><div><div class="logo-text">Meiday Chinese</div><div class="logo-sub">每日中文 — Học mỗi ngày</div></div></div><div class="level-tabs"><button class="level-tab '+(state.level==='hsk1'?'active':'')+'" data-level="hsk1">HSK 1</button><button class="level-tab '+(state.level==='hsk2'?'active':'')+'" data-level="hsk2">HSK 2</button></div></div></div>';
+  return '<div class="header"><div class="header-inner"><div class="logo"><div class="logo-icon">每</div><div><div class="logo-text">Meiday Chinese</div><div class="logo-sub">每日中文 — Học mỗi ngày</div></div></div><div class="header-badge">HSK 3.0</div></div></div>';
 }
 
 function renderNav(){
-  const lessons=getLessons();
   let b='<button class="nav-btn '+(state.view==='home'?'active':'')+'" data-nav="home">Trang chủ</button>';
-  lessons.forEach(l=>{b+='<button class="nav-btn '+(state.view==='lesson'&&state.lessonId===l.id?'active':'')+'" data-nav="lesson" data-id="'+l.id+'">Bài '+l.id+'</button>'});
+  b+='<button class="nav-btn '+(state.view==='level'&&state.level==='hsk1'?'active':'')+'" data-nav="level" data-lv="hsk1">HSK 1</button>';
+  b+='<button class="nav-btn '+(state.view==='level'&&state.level==='hsk2'?'active':'')+'" data-nav="level" data-lv="hsk2">HSK 2</button>';
   return '<div class="nav"><div class="nav-inner">'+b+'</div></div>';
 }
 
@@ -180,6 +180,16 @@ function renderHome(){
   let cards1=HSK1.map(l=>'<div class="lesson-card" data-lesson="'+l.id+'" data-lv="hsk1"><div class="lesson-num">第'+l.id+'课 · Bài '+l.id+'</div><div class="lesson-title-cn">'+l.title+'</div><div class="lesson-title-vi">'+l.titleVi+'</div><div class="lesson-meta"><span class="lesson-tag">'+l.words.length+' từ</span></div></div>').join('');
   let cards2=HSK2.map(l=>'<div class="lesson-card hsk2" data-lesson="'+l.id+'" data-lv="hsk2"><div class="lesson-num">第'+l.id+'课 · Bài '+l.id+'</div><div class="lesson-title-cn">'+l.title+'</div><div class="lesson-title-vi">'+l.titleVi+'</div><div class="lesson-meta"><span class="lesson-tag">'+l.words.length+' từ</span></div></div>').join('');
   return '<div class="home-hero fade-in"><h1>新HSK教程</h1><p>Ôn tập từ vựng HSK 3.0 theo giáo trình chính thức. Lật thẻ, làm quiz, học mỗi ngày!</p><div class="stats-row"><div class="stat"><div class="stat-num">30</div><div class="stat-label">Bài học</div></div><div class="stat"><div class="stat-num">'+(hsk1Total+hsk2Total)+'</div><div class="stat-label">Từ vựng</div></div><div class="stat"><div class="stat-num">3</div><div class="stat-label">Chế độ ôn</div></div></div></div><div class="section-title"><span class="badge badge-hsk1">HSK 1</span> 新HSK教程 1 <span style="font-size:13px;color:var(--ink-light);font-family:Be Vietnam Pro;font-weight:400">· '+hsk1Total+' từ</span></div><div class="lesson-grid fade-in">'+cards1+'</div><div class="section-title"><span class="badge badge-hsk2">HSK 2</span> 新HSK教程 2 <span style="font-size:13px;color:var(--ink-light);font-family:Be Vietnam Pro;font-weight:400">· '+hsk2Total+' từ</span></div><div class="lesson-grid fade-in">'+cards2+'</div>';
+}
+
+
+function renderLevel(){
+  const lessons=state.level==='hsk1'?HSK1:HSK2;
+  const lvNum=state.level==='hsk1'?'1':'2';
+  const colorCls=state.level==='hsk2'?' hsk2':'';
+  const total=getTotal(lessons);
+  let cards=lessons.map(l=>'<div class="lesson-card'+colorCls+'" data-lesson="'+l.id+'" data-lv="'+state.level+'"><div class="lesson-num">第'+l.id+'课 · Bài '+l.id+'</div><div class="lesson-title-cn">'+l.title+'</div><div class="lesson-title-vi">'+l.titleVi+'</div><div class="lesson-meta"><span class="lesson-tag">'+l.words.length+' từ</span></div></div>').join('');
+  return '<div class="fade-in"><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge badge-'+state.level+'">HSK '+lvNum+'</span> <span style="font-family:Noto Serif SC,serif">新HSK教程 '+lvNum+'</span></div><p style="font-size:14px;color:var(--ink-light)">'+total+' từ vựng · 15 bài học</p></div><div class="lesson-grid">'+cards+'</div></div>';
 }
 
 function renderLesson(){
@@ -216,10 +226,9 @@ function generateQuiz(lesson){
 }
 
 function attachEvents(){
-  document.querySelectorAll('[data-level]').forEach(b=>{b.onclick=()=>{state.level=b.dataset.level;state.view='home';render()}});
-  document.querySelectorAll('[data-nav]').forEach(b=>{b.onclick=()=>{if(b.dataset.nav==='home'){state.view='home'}else{state.view='lesson';state.lessonId=parseInt(b.dataset.id);state.mode='list';state.fcShuffled=[];state.quizQuestions=[]}render();window.scrollTo({top:0,behavior:'smooth'})}});
+  document.querySelectorAll('[data-nav]').forEach(b=>{b.onclick=()=>{if(b.dataset.nav==='home'){state.view='home'}else if(b.dataset.nav==='level'){state.view='level';state.level=b.dataset.lv}render();window.scrollTo({top:0,behavior:'smooth'})}});
   document.querySelectorAll('[data-lesson]').forEach(c=>{c.onclick=()=>{const lv=c.dataset.lv;if(lv)state.level=lv;state.view='lesson';state.lessonId=parseInt(c.dataset.lesson);state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
-  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;if(a==='back'){state.view='home';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words);state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
+  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;if(a==='back'){state.view='level';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words);state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
   document.querySelectorAll('[data-mode]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.mode;if(state.mode==='flashcard')state.fcShuffled=[];if(state.mode==='quiz')state.quizQuestions=[];render()}});
   document.querySelectorAll('[data-quiz-opt]').forEach(b=>{b.onclick=()=>{if(state.quizAnswered)return;const i=parseInt(b.dataset.quizOpt);const q=state.quizQuestions[state.quizIndex];q.sel=i;state.quizAnswered=true;if(i===q.ci)state.quizScore++;render();setTimeout(()=>{if(state.quizIndex<state.quizQuestions.length-1){state.quizIndex++;state.quizAnswered=false;render()}else{state.quizDone=true;render()}},1200)}});
 }
