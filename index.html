@@ -2002,11 +2002,13 @@ function gen79Fill(s){
   const pool=s.words.filter(w=>w.ex&&w.ex.length>3);const all=HSK79_ALL;
   const words=shuffle(pool).slice(0,Math.min(20,pool.length));
   state.quizQuestions=words.map(w=>{
-    let ex=w.ex;let idx=ex.indexOf('(');
-    let cn=idx>0?ex.substring(0,idx).trim():ex.split('；')[0].split(';')[0];
-    let vi=idx>0?ex.substring(idx):w.vi;
+    let phrases=w.ex.split(/[；;]/).map(p=>p.trim()).filter(p=>p.length>1);
+    let match=phrases.find(p=>p.indexOf(w.h)>=0)||phrases[0]||w.ex;
+    let idx=match.indexOf('(');
+    let cn=idx>0?match.substring(0,idx).trim():match;
+    let vi=idx>0?match.substring(idx).trim():w.vi;
     let blank=cn.replace(w.h,'______');
-    if(blank===cn){for(let i=0;i<w.h.length&&i<2;i++){let ch=w.h.charAt(i);if(cn.indexOf(ch)>=0){blank=cn.replace(new RegExp(w.h.charAt(0)+'[^，。！？\s]*'),'______');break}}}
+    if(blank===cn){blank=cn.replace(new RegExp('['+w.h[0]+'][^，。！？ ]*'),'______')}
     let wr=shuffle(all.filter(x=>x.h!==w.h).map(x=>x.h)).slice(0,3);
     let opts=shuffle([w.h,...wr]);
     return{sentence:blank,hint:vi,ci:opts.indexOf(w.h),options:opts,sel:-1};
