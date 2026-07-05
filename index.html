@@ -205,9 +205,35 @@ const GRAMMAR_HSK79G = [
 ];
 
 // ═══════════════════════════════════════════
+// LUCIDE ICONS — Inline SVG helpers
+// ═══════════════════════════════════════════
+function icon(name, size) {
+  size = size || 20;
+  const icons = {
+    'pen-line': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+    'file-text': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+    'scroll-text': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 1 4 0v2h12v12a2 2 0 0 1-2 2H8"/><path d="M10 9h8"/><path d="M10 13h6"/><path d="M10 17h4"/></svg>',
+    'bot': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>',
+    'lightbulb': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>',
+    'alert-triangle': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    'check-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    'x-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    'eye': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    'refresh-cw': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+    'volume-2': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
+    'arrow-left': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
+    'arrow-right': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+    'sparkles': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>',
+    'message-square': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    'send': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+  };
+  return icons[name] || '';
+}
+
+// ═══════════════════════════════════════════
 // WRITING — Luyện viết câu với DeepSeek AI
 // ═══════════════════════════════════════════
-const DEEPSEEK_API_KEY = ''; // Nhập API key DeepSeek của bạn ở đây
+const DEEPSEEK_API_KEY = 'REDACTED'; // Nhập API key DeepSeek của bạn ở đây
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 
 function getWritingWordPool() {
@@ -239,47 +265,48 @@ function buildWritingPrompt(subMode) {
   const levelLabel = state.writingLevel || state.level || 'hsk1';
 
   if (subMode === 'short') {
-    return `Bạn là giáo viên tiếng Trung. Hãy tạo một chuỗi bài tập luyện viết câu tiếng Trung LŨY TIẾN (mô hình cuộn tuyết) cho học sinh trình độ ${levelLabel.toUpperCase()}.
+    return `Bạn là giáo viên tiếng Trung. Hãy tạo ${Math.floor(Math.random()*4)+5} câu tiếng Trung ĐỘC LẬP (không liên quan đến nhau, mỗi câu một chủ đề khác nhau) cho học sinh trình độ ${levelLabel.toUpperCase()}.
 
-DANH SÁCH TỪ VỰNG ĐƯỢC PHÉP SỬ DỤNG (CHỈ dùng các chữ Hán có trong danh sách này):
+DANH SÁCH TỪ VỰNG ĐƯỢC PHÉP SỬ DỤNG (CHỈ dùng chữ Hán trong danh sách này):
 ${hanziList}
 
 QUY TẮC:
-- Mỗi bước là một câu tiếng Trung ngày càng dài hơn.
-- Câu ở bước sau PHẢI bao hàm ý nghĩa và từ vựng của bước trước, kết hợp thêm từ mới.
-- Tạo từ 5 đến 8 bước.
-- Chỉ sử dụng chữ Hán có trong danh sách trên, tuyệt đối không dùng chữ Hán ngoài danh sách.
+- Mỗi câu là một chủ đề khác nhau, KHÔNG liên quan đến nhau.
+- Mỗi câu có độ dài vừa phải (5-15 chữ Hán).
+- Chỉ dùng chữ Hán trong danh sách trên.
 
 TRẢ VỀ CHỈ MỘT MẢNG JSON (không markdown, không giải thích):
 [
-  {"step":1,"vi":"Câu tiếng Việt","zh":"Câu tiếng Trung giản thể","pinyin":"Phiên âm có dấu"},
+  {"step":1,"vi":"Câu tiếng Việt","zh":"Câu tiếng Trung","pinyin":"Phiên âm có dấu"},
   ...
 ]`;
   } else {
-    return `Bạn là giáo viên tiếng Trung. Hãy viết một bài văn ngắn bằng tiếng Trung cho học sinh trình độ ${levelLabel.toUpperCase()}.
+    return `Bạn là giáo viên tiếng Trung. Hãy viết một BÀI VĂN DÀI LIỀN MẠCH bằng tiếng Trung cho học sinh trình độ ${levelLabel.toUpperCase()}.
 
-DANH SÁCH TỪ VỰNG ĐƯỢC PHÉP SỬ DỤNG (CHỈ dùng các chữ Hán có trong danh sách này):
+DANH SÁCH TỪ VỰNG ĐƯỢC PHÉP SỬ DỤNG (CHỈ dùng chữ Hán trong danh sách này):
 ${hanziList}
 
 QUY TẮC:
-- Viết một bài văn ngắn khoảng 5-8 câu, có chủ đề thú vị, tự nhiên.
-- Chỉ sử dụng chữ Hán có trong danh sách trên, tuyệt đối không dùng chữ Hán ngoài danh sách.
-- Tách bài văn thành các câu riêng biệt.
+- Viết một bài văn khoảng 6-10 câu, LIỀN MẠCH, có mở đầu, thân, kết.
+- Chủ đề thú vị, tự nhiên (ví dụ: một ngày của tôi, gia đình, sở thích...).
+- Chỉ dùng chữ Hán trong danh sách trên.
 
 TRẢ VỀ CHỈ MỘT MẢNG JSON (không markdown, không giải thích):
 [
-  {"step":1,"vi":"Câu 1 tiếng Việt","zh":"Câu 1 tiếng Trung","pinyin":"Phiên âm câu 1"},
+  {"step":1,"vi":"Câu 1 tiếng Việt","zh":"Câu 1 tiếng Trung","pinyin":"Phiên âm"},
   ...
 ]`;
   }
 }
 
 async function callDeepSeekWriting(subMode) {
+  console.log('callDeepSeekWriting called, subMode='+subMode, 'hasApiKey='+!!DEEPSEEK_API_KEY);
   if (!DEEPSEEK_API_KEY) {
-    // Fallback: tạo dữ liệu cục bộ khi chưa có API key
+    console.log('No API key, using local fallback');
     return generateLocalWritingData(subMode);
   }
   const prompt = buildWritingPrompt(subMode);
+  console.log('Prompt length:', prompt.length);
   try {
     const resp = await fetch(DEEPSEEK_API_URL, {
       method: 'POST',
@@ -294,59 +321,50 @@ async function callDeepSeekWriting(subMode) {
         max_tokens: 2000,
       })
     });
-    if (!resp.ok) throw new Error('API lỗi: ' + resp.status);
+    console.log('DeepSeek response status:', resp.status);
+    if (!resp.ok) {
+      const errText = await resp.text();
+      console.error('DeepSeek error body:', errText.substring(0,200));
+      throw new Error('API lỗi: ' + resp.status);
+    }
     const json = await resp.json();
     const content = json.choices[0].message.content.trim();
-    // Clean response: loại bỏ ```json nếu có
+    console.log('Raw AI response:', content.substring(0,200));
     const clean = content.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+    console.log('Cleaned JSON:', clean.substring(0,200));
     const data = JSON.parse(clean);
     if (!Array.isArray(data)) throw new Error('AI không trả về mảng JSON hợp lệ');
+    console.log('Parsed data, steps:', data.length);
     return data;
   } catch (e) {
-    console.error('DeepSeek API error:', e);
+    console.error('DeepSeek API error:', e.message, e);
     return generateLocalWritingData(subMode);
   }
 }
 
 function generateLocalWritingData(subMode) {
-  // Dữ liệu dự phòng khi không có API key hoặc API lỗi
-  const pool = getWritingWordPool();
-  const hanziPool = pool.map(w => (w.hanzi || w.h || '')).filter(h => h.length <= 3);
-  const shuffleArr = (a) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
-
   if (subMode === 'short') {
-    const selected = shuffleArr(hanziPool).slice(0, 12);
-    const steps = [];
-    let zhAccum = '', viAccum = '', pyAccum = '';
-    const sentences = [
-      { zh: '你好！', vi: 'Xin chào!', py: 'Nǐ hǎo!' },
-      { zh: '我是学生。', vi: 'Tôi là học sinh.', py: 'Wǒ shì xuéshēng.' },
-      { zh: '我很高兴。', vi: 'Tôi rất vui.', py: 'Wǒ hěn gāoxìng.' },
-      { zh: '今天我去学校。', vi: 'Hôm nay tôi đi học.', py: 'Jīntiān wǒ qù xuéxiào.' },
-      { zh: '我喜欢学汉语。', vi: 'Tôi thích học tiếng Trung.', py: 'Wǒ xǐhuan xué Hànyǔ.' },
-      { zh: '我有好朋友。', vi: 'Tôi có bạn tốt.', py: 'Wǒ yǒu hǎo péngyou.' },
+    return [
+      { step:1, vi:'Xin chào! Tôi là học sinh.', zh:'你好！我是学生。', pinyin:'Nǐ hǎo! Wǒ shì xuéshēng.' },
+      { step:2, vi:'Tôi rất thích học tiếng Trung.', zh:'我很喜欢学汉语。', pinyin:'Wǒ hěn xǐhuan xué Hànyǔ.' },
+      { step:3, vi:'Hôm nay thời tiết rất đẹp.', zh:'今天天气很好。', pinyin:'Jīntiān tiānqì hěn hǎo.' },
+      { step:4, vi:'Tôi có ba người bạn tốt.', zh:'我有三个好朋友。', pinyin:'Wǒ yǒu sān ge hǎo péngyou.' },
+      { step:5, vi:'Chúng tôi thường cùng nhau học bài.', zh:'我们常常一起学习。', pinyin:'Wǒmen chángcháng yìqǐ xuéxí.' },
+      { step:6, vi:'Học tiếng Trung rất thú vị!', zh:'学汉语很有意思！', pinyin:'Xué Hànyǔ hěn yǒu yìsi!' },
     ];
-    for (let i = 0; i < Math.min(6, sentences.length); i++) {
-      const s = sentences[i];
-      if (i > 0) { zhAccum += ' '; viAccum += ' '; pyAccum += ' '; }
-      zhAccum += s.zh; viAccum += s.vi; pyAccum += s.py;
-      steps.push({ step: i + 1, vi: viAccum.trim(), zh: zhAccum.trim(), pinyin: pyAccum.trim() });
-    }
-    return steps;
   } else {
-    const sentences = [
-      { zh: '你好！我是学生。', vi: 'Xin chào! Tôi là học sinh.', py: 'Nǐ hǎo! Wǒ shì xuéshēng.' },
-      { zh: '我很喜欢学汉语。', vi: 'Tôi rất thích học tiếng Trung.', py: 'Wǒ hěn xǐhuan xué Hànyǔ.' },
-      { zh: '今天我去学校上课。', vi: 'Hôm nay tôi đến trường học.', py: 'Jīntiān wǒ qù xuéxiào shàngkè.' },
-      { zh: '我有三个好朋友。', vi: 'Tôi có ba người bạn tốt.', py: 'Wǒ yǒu sān ge hǎo péngyou.' },
-      { zh: '我们一起学习和玩。', vi: 'Chúng tôi cùng nhau học và chơi.', py: 'Wǒmen yìqǐ xuéxí hé wán.' },
-      { zh: '学汉语很有意思！', vi: 'Học tiếng Trung rất thú vị!', py: 'Xué Hànyǔ hěn yǒu yìsi!' },
+    return [
+      { step:1, vi:'Xin chào! Tôi là học sinh, tôi rất thích học tiếng Trung.', zh:'你好！我是学生，我很喜欢学汉语。', pinyin:'Nǐ hǎo! Wǒ shì xuéshēng, wǒ hěn xǐhuan xué Hànyǔ.' },
+      { step:2, vi:'Mỗi ngày tôi đều đến trường học.', zh:'每天我都去学校上课。', pinyin:'Měitiān wǒ dōu qù xuéxiào shàngkè.' },
+      { step:3, vi:'Ở trường tôi có ba người bạn rất tốt.', zh:'在学校我有三个很好的朋友。', pinyin:'Zài xuéxiào wǒ yǒu sān ge hěn hǎo de péngyou.' },
+      { step:4, vi:'Chúng tôi thường cùng nhau học bài và chơi.', zh:'我们常常一起学习和玩。', pinyin:'Wǒmen chángcháng yìqǐ xuéxí hé wán.' },
+      { step:5, vi:'Giáo viên của chúng tôi rất tốt, luôn giúp đỡ chúng tôi.', zh:'我们的老师很好，总是帮助我们。', pinyin:'Wǒmen de lǎoshī hěn hǎo, zǒngshì bāngzhù wǒmen.' },
+      { step:6, vi:'Tôi cảm thấy học tiếng Trung rất vui và có ích!', zh:'我觉得学汉语很开心也很有用！', pinyin:'Wǒ juéde xué Hànyǔ hěn kāixīn yě hěn yǒu yòng!' },
     ];
-    return sentences.map((s, i) => ({ step: i + 1, vi: s.vi, zh: s.zh, pinyin: s.py }));
   }
 }
 
-let state={view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'list',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingChecked:false,writingLoading:false,writingError:null,writingLevel:null};
+let state={view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'list',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false};
 function getLessons(){return state.level==='hsk1'?HSK1:state.level==='hsk2'?HSK2:state.level==='hsk3'?HSK3:HSK2}
 function getAllWords(){return[...HSK1,...HSK2,...HSK3].flatMap(l=>l.words)}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
@@ -461,118 +479,202 @@ function renderReviewList(){
 }
 
 function renderWriting(data, levelKey){
-  // state.writingLevel được set khi mở writing mode
   if (levelKey) state.writingLevel = levelKey;
   if (!state.writingSubMode) state.writingSubMode = 'short';
 
-  // Nếu đang loading
   if (state.writingLoading) {
-    return '<div class="writing-container fade-in"><div class="writing-loading"><div class="writing-spinner"></div><div class="writing-loading-text">🤖 AI đang tạo bài luyện viết...</div><div class="writing-loading-sub">Đang gọi DeepSeek API để sinh nội dung phù hợp với từ vựng của bạn</div></div></div>';
+    return '<div class="writing-container fade-in"><div class="writing-loading"><div class="writing-spinner"></div><div class="writing-loading-text">'+icon('bot',24)+' AI đang tạo bài luyện viết...</div><div class="writing-loading-sub">Đang gọi DeepSeek API để sinh nội dung phù hợp với từ vựng của bạn</div></div></div>';
   }
 
-  // Nếu chưa có dữ liệu -> hiển thị màn hình chọn chế độ + nút Generate
   if (!state.writingData || !state.writingData.length) {
     return renderWritingSetup();
   }
 
-  // Đã có dữ liệu -> hiển thị giao diện luyện viết
   const dataArr = state.writingData;
-  if (state.writingStep >= dataArr.length) state.writingStep = 0;
-
-  // Xử lý state.writingUserInputs đảm bảo là object
-  if (!state.writingUserInputs || typeof state.writingUserInputs !== 'object') {
-    state.writingUserInputs = {};
-  }
-
-  const s = dataArr[state.writingStep];
   const total = dataArr.length;
-  const pr = ((state.writingStep + 1) / total) * 100;
-  const userText = state.writingUserInputs[state.writingStep] || '';
+  if (!state.writingUserInputs || typeof state.writingUserInputs !== 'object') state.writingUserInputs = {};
+  const isShort = state.writingSubMode === 'short';
+  const modeLabel = isShort ? 'Câu ngắn độc lập' : 'Bài văn dài liền mạch';
+  const modeIcon = isShort ? icon('file-text',16) : icon('scroll-text',16);
+  const allFilled = dataArr.every((d,i) => (state.writingUserInputs[i]||'').trim());
 
-  let stepsHtml = dataArr.map((d, i) => {
-    let cls = '';
-    const hasInput = state.writingUserInputs[i] && state.writingUserInputs[i].trim();
-    if (state.writingChecked && hasInput) {
-      cls = (state.writingUserInputs[i].trim() === d.zh.trim()) ? 'correct' : 'wrong';
-    } else if (hasInput) {
-      cls = 'filled';
-    }
-    if (i === state.writingStep) cls += ' current';
-    return '<div class="ws-dot ' + cls + '" data-ws-step="' + i + '">' + (i + 1) + '</div>';
+  // Render ALL inputs at once
+  let inputsHtml = dataArr.map((d, i) => {
+    const userText = state.writingUserInputs[i] || '';
+    const segs = (state.writingAiFeedback && state.writingAiFeedback.sentences) ? state.writingAiFeedback.sentences.find(s => s.step === i+1) : null;
+    return '<div class="writing-sentence-block">' +
+      '<div class="writing-sentence-header">' +
+        '<span class="writing-sentence-num">' + (i+1) + '</span>' +
+        '<span class="writing-sentence-vi"><span class="writing-vi-tag">VI</span> ' + d.vi + '</span>' +
+      '</div>' +
+      '<textarea class="writing-textarea" data-writing-input="' + i + '" placeholder="Nhập câu tiếng Trung..." rows="2">' + (userText || '') + '</textarea>' +
+      (segs ? renderColoredFeedback(segs) : '') +
+    '</div>';
   }).join('');
 
+  // Feedback header
+  let feedbackHtml = '';
+  if (state.writingFeedbackLoading) {
+    feedbackHtml = '<div class="writing-feedback-loading">'+icon('sparkles',16)+' AI đang chấm toàn bộ bài viết...</div>';
+  } else if (state.writingAiFeedback) {
+    feedbackHtml = '<div class="writing-feedback">'+icon('message-square',16)+' <strong>AI nhận xét:</strong><br>' + (state.writingAiFeedback.overall || '') + '</div>';
+  }
+
   return '<div class="writing-container fade-in">' +
+    '<button class="back-btn" data-action="writing-back-setup" style="margin-bottom:12px">'+icon('arrow-left',14)+' Đổi chế độ luyện viết</button>' +
     '<div class="writing-submode-bar">' +
-      '<span class="writing-submode-label">' + (state.writingSubMode === 'short' ? '📝 Luyện viết câu ngắn' : '📄 Luyện viết bài văn') + '</span>' +
-      '<button class="writing-regenerate-btn" data-action="writing-regenerate">🔄 Tạo lại</button>' +
+      '<span class="writing-submode-label">'+modeIcon+' ' + modeLabel + '</span>' +
+      '<button class="writing-regenerate-btn" data-action="writing-regenerate">'+icon('refresh-cw',14)+' Tạo lại</button>' +
     '</div>' +
-    '<div class="writing-steps">' + stepsHtml + '</div>' +
-    '<div class="writing-progress-bar"><div class="writing-progress-fill" style="width:' + pr + '%"></div></div>' +
-    '<div class="writing-card">' +
-      '<div class="writing-step-label">Bước ' + (state.writingStep + 1) + ' / ' + total + '</div>' +
-      '<div class="writing-vi">🇻🇳 ' + s.vi + '</div>' +
-      '<div class="writing-divider"></div>' +
-      '<div class="writing-input-area">' +
-        '<textarea class="writing-textarea" data-writing-input="' + state.writingStep + '" placeholder="Nhập câu tiếng Trung của bạn ở đây..." rows="2">' + (userText || '') + '</textarea>' +
-      '</div>' +
-      (state.writingChecked ? renderWritingAnswer(s, userText) : '') +
-      '<div class="writing-action-row">' +
-        '<button class="writing-check-btn" data-action="writing-check" ' + (!userText.trim() ? 'disabled' : '') + '>✅ Kiểm tra đáp án</button>' +
-        '<button class="writing-hint-btn" data-action="writing-reveal">👁 Xem đáp án</button>' +
-      '</div>' +
-    '</div>' +
-    '<div class="writing-controls">' +
-      '<button class="writing-nav-btn" data-action="writing-prev" ' + (state.writingStep === 0 ? 'disabled' : '') + '>← Bước trước</button>' +
-      '<button class="writing-nav-btn" data-action="writing-reset">🔄 Làm lại từ đầu</button>' +
-      '<button class="writing-nav-btn" data-action="writing-next" ' + (state.writingStep >= total - 1 ? 'disabled' : '') + '>Bước tiếp →</button>' +
+    '<div class="writing-all-inputs">' + inputsHtml + '</div>' +
+    feedbackHtml +
+    '<div class="writing-submit-row">' +
+      '<button class="writing-submit-btn" data-action="writing-submit-all" ' + (!allFilled || state.writingFeedbackLoading ? 'disabled' : '') + '>' +
+        icon('send',16)+' Gửi chấm toàn bộ bài (' + total + ' câu)' +
+      '</button>' +
+      '<button class="writing-reset-btn" data-action="writing-reset">'+icon('refresh-cw',14)+' Làm lại từ đầu</button>' +
     '</div>' +
   '</div>';
 }
 
-function renderWritingAnswer(s, userText) {
-  const isCorrect = userText.trim() === s.zh.trim();
-  return '<div class="writing-answer ' + (isCorrect ? 'writing-answer-correct' : 'writing-answer-wrong') + '">' +
-    '<div class="writing-answer-label">' + (isCorrect ? '✅ Chính xác!' : '❌ Cần xem lại') + '</div>' +
-    '<div class="writing-answer-zh">' + s.zh + '</div>' +
-    '<div class="writing-answer-pinyin">' + s.pinyin + '</div>' +
-    '<button class="audio-btn writing-speak" data-speak="' + s.zh + '" style="font-size:20px">🔊 Nghe</button>' +
-    (userText.trim() && !isCorrect ? '<div class="writing-compare"><div class="writing-compare-label">Bạn viết:</div><div class="writing-compare-text">' + userText.trim() + '</div></div>' : '') +
-  '</div>';
+function renderColoredFeedback(segs) {
+  if (!segs || !segs.segments) return '';
+  let html = '<div class="writing-colored-feedback">';
+  segs.segments.forEach((sg, i) => {
+    if (sg.correct) {
+      html += '<span class="seg-correct">' + sg.text + '</span>';
+    } else {
+      const tipId = 'seg-tip-' + segs.step + '-' + i;
+      const tipText = (sg.reason || 'Sai') + (sg.fix ? ' → Đúng: ' + sg.fix : '');
+      html += '<span class="seg-wrong" data-seg-tip="' + tipId + '" onclick="event.stopPropagation();var el=document.getElementById(\'' + tipId + '\');var all=document.querySelectorAll(\'.seg-tip-popover\');all.forEach(function(p){if(p!==el)p.style.display=\'none\'});el.style.display=el.style.display===\'block\'?\'none\':\'block\'">' + sg.text + '<span class="seg-tip-popover" id="' + tipId + '">' + tipText + '</span></span>';
+    }
+  });
+  html += '</div>';
+  return html;
 }
 
 function renderWritingSetup() {
+  const isShort = state.writingSubMode === 'short';
   return '<div class="writing-container fade-in">' +
     '<div class="writing-setup">' +
-      '<div class="writing-setup-icon">✍️</div>' +
+      '<div class="writing-setup-icon">' + icon('pen-line',48) + '</div>' +
       '<div class="writing-setup-title">Luyện viết câu tiếng Trung</div>' +
-      '<div class="writing-setup-desc">AI sẽ tạo bài luyện viết phù hợp với từ vựng bạn đã học. Chọn chế độ bên dưới và nhấn <strong>Tạo bài luyện tập</strong>.</div>' +
+      '<div class="writing-setup-desc">AI sẽ tạo bài luyện viết phù hợp với từ vựng bạn đã học.</div>' +
       '<div class="writing-setup-modes">' +
-        '<label class="writing-mode-card ' + (state.writingSubMode === 'short' ? 'active' : '') + '">' +
-          '<input type="radio" name="writingSubMode" value="short" ' + (state.writingSubMode === 'short' ? 'checked' : '') + ' data-wsmode="short" style="display:none">' +
-          '<div class="writing-mode-icon">📝</div>' +
-          '<div class="writing-mode-title">Câu ngắn lũy tiến</div>' +
-          '<div class="writing-mode-desc">Mỗi bước là một câu dài dần, bước sau bao hàm bước trước (mô hình cuộn tuyết)</div>' +
+        '<label class="writing-mode-card ' + (isShort ? 'active' : '') + '">' +
+          '<input type="radio" name="writingSubMode" value="short" ' + (isShort ? 'checked' : '') + ' data-wsmode="short" style="display:none">' +
+          '<div class="writing-mode-icon">' + icon('file-text',32) + '</div>' +
+          '<div class="writing-mode-title">Câu ngắn độc lập</div>' +
+          '<div class="writing-mode-desc">5-8 câu độc lập, mỗi câu một chủ đề khác nhau</div>' +
         '</label>' +
-        '<label class="writing-mode-card ' + (state.writingSubMode === 'essay' ? 'active' : '') + '">' +
-          '<input type="radio" name="writingSubMode" value="essay" ' + (state.writingSubMode === 'essay' ? 'checked' : '') + ' data-wsmode="essay" style="display:none">' +
-          '<div class="writing-mode-icon">📄</div>' +
-          '<div class="writing-mode-title">Bài văn hoàn chỉnh</div>' +
-          '<div class="writing-mode-desc">Một bài văn ngắn được chia thành từng câu để bạn luyện viết từng phần</div>' +
+        '<label class="writing-mode-card ' + (!isShort ? 'active' : '') + '">' +
+          '<input type="radio" name="writingSubMode" value="long" ' + (!isShort ? 'checked' : '') + ' data-wsmode="long" style="display:none">' +
+          '<div class="writing-mode-icon">' + icon('scroll-text',32) + '</div>' +
+          '<div class="writing-mode-title">Bài văn dài liền mạch</div>' +
+          '<div class="writing-mode-desc">Một bài văn 6-10 câu liền mạch, có mở-thân-kết</div>' +
         '</label>' +
       '</div>' +
-      '<button class="writing-generate-btn" data-action="writing-generate">🤖 Tạo bài luyện tập</button>' +
-      (state.writingError ? '<div class="writing-error">⚠️ ' + state.writingError + '</div>' : '') +
-      '<div class="writing-setup-hint">💡 <em>Nếu có API key DeepSeek, AI sẽ tạo nội dung thông minh. Nếu chưa có, app sẽ dùng dữ liệu mẫu.</em></div>' +
+      '<button class="writing-generate-btn" data-action="writing-generate">' + icon('sparkles',18) + ' Tạo bài luyện tập</button>' +
+      (state.writingError ? '<div class="writing-error">' + icon('alert-triangle',16) + ' ' + state.writingError + '</div>' : '') +
+      '<div class="writing-setup-hint">' + icon('lightbulb',14) + ' <em>Viết hết các câu rồi nhấn "Gửi chấm toàn bộ". AI sẽ tô màu xanh (đúng) / đỏ (sai) cho từng ký tự.</em></div>' +
     '</div>' +
   '</div>';
 }
 
-function saveWritingInput() {
-  const ta = document.querySelector('[data-writing-input="' + state.writingStep + '"]');
-  if (ta) {
-    if (!state.writingUserInputs) state.writingUserInputs = {};
-    state.writingUserInputs[state.writingStep] = ta.value;
+function saveAllWritingInputs() {
+  document.querySelectorAll('[data-writing-input]').forEach(ta => {
+    const idx = parseInt(ta.dataset.writingInput);
+    if (!isNaN(idx)) {
+      if (!state.writingUserInputs) state.writingUserInputs = {};
+      state.writingUserInputs[idx] = ta.value;
+    }
+  });
+}
+
+async function callDeepSeekGrading(subMode, writingData, userInputs) {
+  console.log('callDeepSeekGrading (batch) called, sentences:', writingData.length);
+  if (!DEEPSEEK_API_KEY) {
+    console.log('No API key, using local grading');
+    return generateLocalGrading(writingData, userInputs);
   }
+  // Build prompt with all sentences
+  let sentencesBlock = writingData.map((d,i) => {
+    const user = userInputs[i] || '';
+    return `Câu ${i+1}:\n- Tiếng Việt: ${d.vi}\n- Đáp án mẫu: ${d.zh}\n- Học sinh viết: ${user}`;
+  }).join('\n\n');
+
+  const prompt = `Bạn là giáo viên tiếng Trung. Hãy chấm điểm TỪNG CÂU và phân tích THEO TỪNG KÝ TỰ/TỪ cho bài viết sau.
+
+${sentencesBlock}
+
+Với MỖI câu, hãy so sánh câu học sinh viết với đáp án mẫu, sau đó trả về các đoạn (segments) để tô màu:
+- Mỗi ký tự hoặc từ đúng → correct: true
+- Mỗi ký tự hoặc từ sai → correct: false, kèm "fix" (từ đúng) và "reason" (lý do ngắn bằng tiếng Việt)
+
+TRẢ VỀ CHỈ MỘT OBJECT JSON (không markdown):
+{
+  "overall": "Nhận xét tổng quan 1-2 câu",
+  "sentences": [
+    {"step":1, "segments":[
+      {"text":"我喜欢","correct":true},
+      {"text":"狗","correct":false,"fix":"猫","reason":"Câu gốc nói về mèo, không phải chó"}
+    ]},
+    ...
+  ]
+}`;
+  try {
+    const resp = await fetch(DEEPSEEK_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + DEEPSEEK_API_KEY },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: 'Bạn là giáo viên tiếng Trung. CHỈ trả về JSON hợp lệ, không markdown, không giải thích ngoài JSON.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.4,
+        max_tokens: 2000,
+      })
+    });
+    if (!resp.ok) throw new Error('API lỗi: ' + resp.status);
+    const json = await resp.json();
+    const content = json.choices[0].message.content.trim();
+    const clean = content.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+    return JSON.parse(clean);
+  } catch (e) {
+    console.error('Batch grading error:', e);
+    return generateLocalGrading(writingData, userInputs);
+  }
+}
+
+function generateLocalGrading(writingData, userInputs) {
+  const sentences = writingData.map((d, i) => {
+    const user = (userInputs[i] || '').trim();
+    const expected = d.zh.trim();
+    if (!user) return { step: i+1, segments: [{ text: '_(chưa viết)_', correct: false, fix: expected, reason: 'Bạn chưa viết câu này' }] };
+    if (user === expected) return { step: i+1, segments: [{ text: user, correct: true }] };
+    // Simple diff: split into words and compare
+    const segs = [];
+    const userChars = [...user];
+    const expChars = [...expected];
+    const maxLen = Math.max(userChars.length, expChars.length);
+    let currentText = '', currentCorrect = null;
+    for (let j = 0; j < maxLen; j++) {
+      const uc = userChars[j] || '';
+      const ec = expChars[j] || '';
+      const match = uc === ec;
+      if (currentCorrect !== match && currentText) {
+        segs.push({ text: currentText, correct: !!currentCorrect });
+        currentText = '';
+      }
+      currentCorrect = match;
+      currentText += uc || ec;
+    }
+    if (currentText) segs.push({ text: currentText, correct: !!currentCorrect });
+    if (segs.length === 0) segs.push({ text: user, correct: user === expected });
+    return { step: i+1, segments: segs };
+  });
+  return { overall: 'Chấm điểm tự động (không có AI): so sánh ký tự.', sentences };
 }
 
 async function generateWriting() {
@@ -584,8 +686,8 @@ async function generateWriting() {
     state.writingData = data;
     state.writingStep = 0;
     state.writingUserInputs = {};
-    state.writingChecked = false;
-    state.writingShowZh = false;
+    state.writingSubmitted = false;
+    state.writingAiFeedback = null;
     state.writingLoading = false;
   } catch (e) {
     state.writingError = 'Lỗi: ' + (e.message || 'Không thể tạo bài tập');
@@ -1135,21 +1237,40 @@ function attachEvents(){
   document.querySelectorAll('[data-action="fc-shuffle-review"]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();state.fcShuffled=shuffle(HSK1_ALL);state.fcIndex=0;state.fcFlipped=false;render()}});
   document.querySelectorAll('[data-action="quiz-restart-review"]').forEach(b=>{b.onclick=()=>{generateReviewQuiz(state.rQuizType);render()}});
   // Writing mode events
-  document.querySelectorAll('[data-action="reveal-writing"]').forEach(b=>{b.onclick=()=>{state.writingShowZh=true;state.writingChecked=true;render()}});
-  document.querySelectorAll('[data-action="writing-prev"]').forEach(b=>{b.onclick=()=>{saveWritingInput();if(state.writingStep>0){state.writingStep--;state.writingShowZh=false;state.writingChecked=false}render()}});
-  document.querySelectorAll('[data-action="writing-next"]').forEach(b=>{b.onclick=()=>{saveWritingInput();state.writingStep++;state.writingShowZh=false;state.writingChecked=false;render()}});
-  document.querySelectorAll('[data-action="writing-reset"]').forEach(b=>{b.onclick=()=>{state.writingStep=0;state.writingShowZh=false;state.writingChecked=false;state.writingUserInputs={};render()}});
-  document.querySelectorAll('[data-ws-step]').forEach(b=>{b.onclick=()=>{saveWritingInput();state.writingStep=parseInt(b.dataset.wsStep);state.writingShowZh=false;state.writingChecked=false;render()}});
-  document.querySelectorAll('[data-action="writing-check"]').forEach(b=>{b.onclick=()=>{saveWritingInput();state.writingChecked=true;state.writingShowZh=true;render()}});
-  document.querySelectorAll('[data-action="writing-generate"]').forEach(b=>{b.onclick=async()=>{await generateWriting();render()}});
-  document.querySelectorAll('[data-action="writing-regenerate"]').forEach(b=>{b.onclick=async()=>{state.writingData=null;state.writingUserInputs={};state.writingStep=0;state.writingChecked=false;state.writingShowZh=false;await generateWriting();render()}});
+  document.querySelectorAll('[data-action="writing-back-setup"]').forEach(b=>{b.onclick=()=>{state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingAiFeedback=null;state.writingError=null;render()}});
+  document.querySelectorAll('[data-action="writing-reset"]').forEach(b=>{b.onclick=()=>{state.writingUserInputs={};state.writingSubmitted=false;state.writingAiFeedback=null;render()}});
+  document.querySelectorAll('[data-action="writing-generate"]').forEach(b=>{b.onclick=async()=>{try{await generateWriting();render()}catch(e){console.error(e);state.writingLoading=false;render()}}});
+  document.querySelectorAll('[data-action="writing-regenerate"]').forEach(b=>{b.onclick=async()=>{state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingAiFeedback=null;try{await generateWriting();render()}catch(e){console.error(e);state.writingLoading=false;render()}}});
+  document.querySelectorAll('[data-action="writing-submit-all"]').forEach(b=>{b.onclick=async()=>{
+    try {
+      saveAllWritingInputs();
+      if(!state.writingData) return;
+      state.writingFeedbackLoading = true;
+      state.writingSubmitted = true;
+      render();
+      const feedback = await callDeepSeekGrading(state.writingSubMode, state.writingData, state.writingUserInputs);
+      state.writingAiFeedback = feedback;
+      state.writingFeedbackLoading = false;
+      render();
+    } catch(e) {
+      console.error('submit-all error:', e);
+      state.writingFeedbackLoading = false;
+      state.writingError = 'Lỗi chấm bài: ' + (e.message||'');
+      render();
+    }
+  }});
   document.querySelectorAll('[data-wsmode]').forEach(b=>{b.onclick=()=>{state.writingSubMode=b.dataset.wsmode;render()}});
   document.querySelectorAll('.writing-mode-card').forEach(b=>{b.onclick=function(){const r=this.querySelector('input[type=radio]');if(r){r.checked=true;state.writingSubMode=r.value;render()}}});
-  // Lưu input người dùng khi rời textarea
+  // Lưu input + cập nhật nút submit
   document.querySelectorAll('[data-writing-input]').forEach(ta=>{
     ta.addEventListener('input', function(){
-      const stepIdx = parseInt(this.dataset.writingInput);
-      if(!isNaN(stepIdx)){if(!state.writingUserInputs)state.writingUserInputs={};state.writingUserInputs[stepIdx]=this.value}
+      const idx = parseInt(this.dataset.writingInput);
+      if(!isNaN(idx)){if(!state.writingUserInputs)state.writingUserInputs={};state.writingUserInputs[idx]=this.value}
+      // Update submit button state
+      const allInputs = document.querySelectorAll('[data-writing-input]');
+      const allFilled = Array.from(allInputs).every(t => t.value.trim());
+      const submitBtn = document.querySelector('[data-action="writing-submit-all"]');
+      if(submitBtn) submitBtn.disabled = !allFilled;
     });
   });
   document.querySelectorAll('.word-item').forEach(el=>{
