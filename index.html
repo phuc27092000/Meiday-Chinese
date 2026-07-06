@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meiday Chinese — HSK 3.0</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;700&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/src/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
 </head>
@@ -226,6 +226,12 @@ function icon(name, size) {
     'sparkles': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>',
     'message-square': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
     'send': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+    'star': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    'list': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+    'book-open': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+    'shuffle': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
+    'pencil': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>',
+    'columns-2': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="9" height="18" x="3" y="3" rx="2"/><rect width="9" height="18" x="12" y="3" rx="2"/></svg>',
   };
   return icons[name] || '';
 }
@@ -372,12 +378,12 @@ function getTotal(arr){return arr.reduce((s,l)=>s+l.words.length,0)}
 
 function render(){
   const app=document.getElementById('app');
-  app.innerHTML=renderHeader()+renderNav()+'<div class="main">'+(state.view==='home'?renderHome():state.view==='level'?renderLevel():state.view==='review'?renderReview():state.view==='review2'?renderReview2():state.view==='hsk79set'?renderHSK79Set():state.view==='review3'?renderReview3():state.view==='hsk456set'?renderHSK456Set():state.view==='grammarAdv'?renderGrammarAdv():state.view==='grammar'?renderGrammar():renderLesson())+'</div>';
+  app.innerHTML=renderHeader()+renderNav()+'<div class="main">'+(state.view==='home'?renderHome():state.view==='level'?renderLevel():state.view==='review'?renderReview():state.view==='review2'?renderReview2():state.view==='hsk79set'?renderHSK79Set():state.view==='review3'?renderReview3():state.view==='hsk456set'?renderHSK456Set():state.view==='grammarAdv'?renderGrammarAdv():state.view==='grammar'?renderGrammar():state.view==='grammarAll'?renderGrammarAll():renderLesson())+'</div>';
   attachEvents();
 }
 
 function renderHeader(){
-  return '<div class="header"><div class="header-inner"><div class="logo"><div class="logo-icon">每</div><div><div class="logo-text">Meiday Chinese</div><div class="logo-sub">每日中文 — Học mỗi ngày</div></div></div><div class="header-badge">HSK 3.0</div></div></div>';
+  return '<div class="header"><div class="header-inner"><div class="logo"><div class="logo-icon">梅</div><div><div class="logo-text">Meiday Chinese</div><div class="logo-sub">每日中文 — Học mỗi ngày</div></div></div><div class="header-badge">HSK 3.0</div></div></div>';
 }
 
 function renderNav(){
@@ -393,61 +399,76 @@ function renderNav(){
 }
 
 function renderHome(){
-  const hsk1Total=getTotal(HSK1),hsk2Total=getTotal(HSK2);
-  let reviewCardHome='<div class="lesson-card review-card" data-action="open-review"><div class="lesson-num" style="color:var(--md-sys-color-secondary)">⭐ Tổng ôn từ vựng</div><div class="lesson-title-cn">300 từ HSK1</div><div class="lesson-title-vi">Flashcard · Trắc nghiệm · Điền từ</div><div class="lesson-meta"><span class="lesson-tag" style="background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)">300 từ</span></div></div>';
-  let cards1=HSK1.map(l=>'<div class="lesson-card" data-lesson="'+l.id+'" data-lv="hsk1"><div class="lesson-num">第'+l.id+'课 · Bài '+l.id+'</div><div class="lesson-title-cn">'+l.title+'</div><div class="lesson-title-vi">'+l.titleVi+'</div><div class="lesson-meta"><span class="lesson-tag">'+l.words.length+' từ</span></div></div>').join('');
-  let reviewCardHome2='<div class="lesson-card review-card hsk2" data-action="open-review2"><div class="lesson-num" style="color:var(--md-sys-color-secondary)">⭐ Tổng ôn từ vựng</div><div class="lesson-title-cn">200 từ HSK2</div><div class="lesson-title-vi">Flashcard · Trắc nghiệm · Điền từ</div><div class="lesson-meta"><span class="lesson-tag" style="background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)">200 từ</span></div></div>';
-  let cards2=HSK2.map(l=>'<div class="lesson-card hsk2" data-lesson="'+l.id+'" data-lv="hsk2"><div class="lesson-num">第'+l.id+'课 · Bài '+l.id+'</div><div class="lesson-title-cn">'+l.title+'</div><div class="lesson-title-vi">'+l.titleVi+'</div><div class="lesson-meta"><span class="lesson-tag">'+l.words.length+' từ</span></div></div>').join('');
-  let gc1='<div class="lesson-card" style="border:2px dashed #C0392B;background:linear-gradient(135deg,#FFF8F0,#FFF0E8);cursor:pointer" data-action="open-grammar" data-glv="hsk1"><div class="lesson-num" style="color:#C0392B">📖 Ngữ pháp HSK 1</div><div class="lesson-title-cn" style="font-size:18px">'+Object.values(GRAMMAR_HSK1).flat().length+' điểm ngữ pháp</div><div class="lesson-title-vi">Lý thuyết + Ví dụ theo bài</div></div>';
-  let gc2='<div class="lesson-card" style="border:2px dashed #E67E22;background:linear-gradient(135deg,#FFF8F0,#FFF3E8);cursor:pointer" data-action="open-grammar" data-glv="hsk2"><div class="lesson-num" style="color:#E67E22">📖 Ngữ pháp HSK 2</div><div class="lesson-title-cn" style="font-size:18px">'+Object.values(GRAMMAR_HSK2).flat().length+' điểm ngữ pháp</div><div class="lesson-title-vi">Lý thuyết + Ví dụ theo bài</div></div>';
-return '<div class="home-hero fade-in"><h1>新HSK教程</h1><p>Ôn tập từ vựng HSK 3.0 theo giáo trình chính thức. Lật thẻ, làm quiz, học mỗi ngày!</p><div class="stats-row"><div class="stat"><div class="stat-num">9</div><div class="stat-label">Cấp độ</div></div><div class="stat"><div class="stat-num">11000</div><div class="stat-label">Từ vựng</div></div><div class="stat"><div class="stat-num">4</div><div class="stat-label">Chế độ ôn</div></div></div></div>' +
-       '<div class="section-title"><span class="badge badge-hsk1">HSK 1</span> 新HSK教程 1 <span style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-family:Be Vietnam Pro;font-weight:400">· '+hsk1Total+' từ</span></div>' +
-       '<div class="lesson-grid fade-in">'+reviewCardHome+gc1+cards1+'</div>' +
-       '<div class="section-title"><span class="badge badge-hsk2">HSK 2</span> 新HSK教程 2 <span style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-family:Be Vietnam Pro;font-weight:400">· '+hsk2Total+' từ</span></div>' +
-       '<div class="lesson-grid fade-in">'+reviewCardHome2+gc2+cards2+'</div>' +
-       renderHomeHSK3()+renderHomeHSK456()+renderHomeHSK79();}
-
-
-
-
-function renderHomeHSK3(){
-  let gc3='<div class="lesson-card" style="border:2px dashed #27AE60;background:linear-gradient(135deg,#F0FFF8,#E8FFF0);cursor:pointer" data-action="open-grammar" data-glv="hsk3"><div class="lesson-num" style="color:#27AE60">📖 Ngữ pháp HSK 3</div><div class="lesson-title-cn" style="font-size:18px">'+Object.values(GRAMMAR_HSK3).flat().length+' điểm ngữ pháp</div><div class="lesson-title-vi">Lý thuyết + Ví dụ theo bài</div></div>';
-  let rc3='<div class="lesson-card review-card hsk3" data-action="open-review3"><div class="lesson-num" style="color:var(--md-sys-color-secondary)">⭐ Tổng ôn từ vựng</div><div class="lesson-title-cn">500 từ HSK3</div><div class="lesson-title-vi">Flashcard · Trắc nghiệm · Điền từ</div><div class="lesson-meta"><span class="lesson-tag" style="background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)">500 từ</span></div></div>';
-  let cards=HSK3.map(l=>'<div class="lesson-card hsk3" data-lesson="'+l.id+'" data-lv="hsk3"><div class="lesson-num" style="color:#27AE60">第'+l.id+'课 · Bài '+l.id+'</div><div class="lesson-title-cn">'+l.title+'</div><div class="lesson-title-vi">'+l.titleVi+'</div><div class="lesson-meta"><span class="lesson-tag" style="background:#EAFAF1;color:#27AE60">'+l.words.length+' từ</span></div></div>').join('');
-  return '<div class="section-title"><span class="badge" style="background:var(--hsk3-accent)">HSK 3</span> 新HSK教程 3 <span style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-family:Be Vietnam Pro;font-weight:400">· '+getTotal(HSK3)+' từ</span></div><div class="lesson-grid fade-in">'+rc3+cards+'</div>';
+  return renderHomeHero() + renderHomeLevelCards() + renderHomeQuickActions();
 }
 
+function renderHomeHero(){
+  return '<div class="home-hero fade-in">' +
+    '<div class="hero-greeting">你好! 👋</div>' +
+    '<h1>Học tiếng Trung<br>mỗi ngày cùng Meiday</h1>' +
+    '<p>Ôn tập từ vựng HSK 3.0 theo giáo trình chính thức. Lật thẻ, làm quiz, luyện viết — tất cả trong một ứng dụng.</p>' +
+    '<div class="stats-row">' +
+      '<div class="stat"><div class="stat-num">7</div><div class="stat-label">Cấp độ</div></div>' +
+      '<div class="stat"><div class="stat-num">11000</div><div class="stat-label">Từ vựng</div></div>' +
+      '<div class="stat"><div class="stat-num">5</div><div class="stat-label">Chế độ ôn</div></div>' +
+    '</div></div>';
+}
 
-function renderHomeHSK456(){
-  let html='';
-  const levels=[
-    {all:HSK4_ALL,num:'4',color:'#2980B9',bg:'#EBF5FB',lv:'hsk4'},
-    {all:HSK5_ALL,num:'5',color:'#1ABC9C',bg:'#E8F6F3',lv:'hsk5'},
-    {all:HSK6_ALL,num:'6',color:'#F39C12',bg:'#FEF5E7',lv:'hsk6'},
+function renderHomeLevelCards(){
+  const levels = [
+    { lv:'hsk1', num:'1', name:'HSK 1', cn:'新HSK教程 1', color:'#1A73E8', bg:'#E8F0FE', words: getTotal(HSK1), desc:'Sơ cấp — 15 bài, 300 từ' },
+    { lv:'hsk2', num:'2', name:'HSK 2', cn:'新HSK教程 2', color:'#E37400', bg:'#FEF0E0', words: getTotal(HSK2), desc:'Sơ cấp — 15 bài, 200 từ' },
+    { lv:'hsk3', num:'3', name:'HSK 3', cn:'新HSK教程 3', color:'#0F766E', bg:'#E0F2F1', words: getTotal(HSK3), desc:'Trung cấp — 18 bài, 500 từ' },
+    { lv:'hsk4', num:'4', name:'HSK 4', cn:'HSK 四级', color:'#2980B9', bg:'#EBF5FB', words: (typeof HSK4_ALL!=='undefined'?HSK4_ALL.length:0), desc:'Trung cấp — '+(typeof HSK4_ALL!=='undefined'?Math.ceil(HSK4_ALL.length/20):0)+' mục' },
+    { lv:'hsk5', num:'5', name:'HSK 5', cn:'HSK 五级', color:'#1ABC9C', bg:'#E8F8F5', words: (typeof HSK5_ALL!=='undefined'?HSK5_ALL.length:0), desc:'Cao cấp — '+(typeof HSK5_ALL!=='undefined'?Math.ceil(HSK5_ALL.length/20):0)+' mục' },
+    { lv:'hsk6', num:'6', name:'HSK 6', cn:'HSK 六级', color:'#F39C12', bg:'#FEF5E7', words: (typeof HSK6_ALL!=='undefined'?HSK6_ALL.length:0), desc:'Cao cấp — '+(typeof HSK6_ALL!=='undefined'?Math.ceil(HSK6_ALL.length/20):0)+' mục' },
+    { lv:'hsk79', num:'7-9', name:'HSK 7-9', cn:'HSK 七–九级', color:'#9334E6', bg:'#F3E8FF', words: (typeof HSK79_ALL!=='undefined'?HSK79_ALL.length:0), desc:'Nâng cao — '+(typeof HSK79_ALL!=='undefined'?Math.ceil(HSK79_ALL.length/20):0)+' mục' },
   ];
-  levels.forEach(d=>{
-    const totalSets=Math.ceil(d.all.length/20);
-    let preview='';
-    let gd456={hsk4:GRAMMAR_HSK4,hsk5:GRAMMAR_HSK5,hsk6:GRAMMAR_HSK6}[d.lv];
-    if(gd456)preview='<div class="lesson-card" style="border:2px dashed '+d.color+';background:linear-gradient(135deg,#FAFAFA,#F5F5F5);cursor:pointer" data-action="open-grammarAdv" data-glv="'+d.lv+'"><div class="lesson-num" style="color:'+d.color+'">📖 Ngữ pháp HSK '+d.num+'</div><div class="lesson-title-cn" style="font-size:16px">'+gd456.length+' điểm</div><div class="lesson-title-vi">Phân loại theo nhóm</div></div>';
-    for(let i=0;i<Math.min(4,totalSets);i++){
-      const start=i*20+1,end=Math.min((i+1)*20,d.all.length);
-      const words=d.all.slice(i*20,i*20+20);
-      preview+='<div class="lesson-card" style="border-left:3px solid '+d.color+'" data-hsk456set="'+(i+1)+'" data-nav-lv="'+d.lv+'"><div class="lesson-num" style="color:'+d.color+'">Mục '+(i+1)+'</div><div class="lesson-title-cn" style="font-size:17px">Từ '+start+' – '+end+'</div><div class="lesson-title-vi" style="font-size:12px">'+words.slice(0,4).map(w=>w.h).join(' · ')+'…</div><div class="lesson-meta"><span class="lesson-tag" style="background:'+d.bg+';color:'+d.color+'">'+words.length+' từ</span></div></div>';
-    }
 
-    preview+='<div class="lesson-card" style="border-left:3px solid '+d.color+';display:flex;align-items:center;justify-content:center;border-style:dashed;cursor:pointer" data-nav="level" data-lv="'+d.lv+'"><div style="text-align:center;color:'+d.color+';font-weight:600;font-size:14px">Xem tất cả '+totalSets+' mục →</div></div>';
-    html+='<div class="section-title"><span class="badge" style="background:'+d.color+'">HSK '+d.num+'</span> Từ vựng HSK '+d.num+' <span style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-family:Be Vietnam Pro;font-weight:400">· '+d.all.length+' từ · '+totalSets+' mục</span></div><div class="lesson-grid fade-in">'+preview+'</div>';
-  });
-  return html;
+  let cards = levels.map(function(l){
+    return '<div class="level-card" data-nav="level" data-lv="' + l.lv + '" style="--lv-color:' + l.color + ';--lv-bg:' + l.bg + '">' +
+      '<div class="level-card-top">' +
+        '<div class="level-card-badge" style="background:' + l.color + '">' + l.num + '</div>' +
+        '<div class="level-card-wordcount">' + l.words + ' từ</div>' +
+      '</div>' +
+      '<div class="level-card-title">' + l.name + '</div>' +
+      '<div class="level-card-cn">' + l.cn + '</div>' +
+      '<div class="level-card-desc">' + l.desc + '</div>' +
+      '<div class="level-card-arrow">→</div>' +
+    '</div>';
+  }).join('');
+
+  return '<div class="section-title fade-in"><span class="section-icon">📚</span> Chọn cấp độ học</div>' +
+    '<div class="level-grid fade-in">' + cards + '</div>';
 }
 
-function renderHomeHSK79(){
-  const sets=getHSK79Sets();
-  let preview='<div class="lesson-card" style="border:2px dashed #8E44AD;background:linear-gradient(135deg,#FAF5FF,#F3EAFF);cursor:pointer" data-action="open-grammarAdv" data-glv="hsk79"><div class="lesson-num" style="color:#8E44AD">📖 Ngữ pháp HSK 7-9</div><div class="lesson-title-cn" style="font-size:16px">'+GRAMMAR_HSK79G.length+' điểm</div><div class="lesson-title-vi">Phân loại theo nhóm</div></div>';
-  preview+=sets.slice(0,6).map(s=>'<div class="lesson-card hsk79" data-hsk79set="'+s.id+'"><div class="lesson-num" style="color:#8E44AD">Mục '+s.id+'</div><div class="lesson-title-cn" style="font-size:17px">Từ '+s.start+' – '+s.end+'</div><div class="lesson-title-vi" style="font-size:12px">'+s.words.slice(0,4).map(w=>w.h).join(' · ')+'…</div><div class="lesson-meta"><span class="lesson-tag" style="background:#F4ECF7;color:#8E44AD">'+s.words.length+' từ</span></div></div>').join('');
-  preview+='<div class="lesson-card hsk79" style="display:flex;align-items:center;justify-content:center;border-style:dashed;cursor:pointer" data-nav="level" data-lv="hsk79"><div style="text-align:center;color:#8E44AD;font-weight:600;font-size:14px">Xem tất cả '+sets.length+' mục →</div></div>';
-  return '<div class="section-title"><span class="badge" style="background:var(--hsk79-accent)">HSK 7-9</span> Từ vựng nâng cao <span style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-family:Be Vietnam Pro;font-weight:400">· '+HSK79_ALL.length+' từ · '+sets.length+' mục</span></div><div class="lesson-grid fade-in">'+preview+'</div>';
+function renderHomeQuickActions(){
+  let grammarTotal = 0;
+  if (typeof GRAMMAR_HSK1 !== 'undefined') grammarTotal += Object.values(GRAMMAR_HSK1).flat().length;
+  if (typeof GRAMMAR_HSK2 !== 'undefined') grammarTotal += Object.values(GRAMMAR_HSK2).flat().length;
+  if (typeof GRAMMAR_HSK3 !== 'undefined') grammarTotal += Object.values(GRAMMAR_HSK3).flat().length;
+  if (typeof GRAMMAR_HSK4 !== 'undefined') grammarTotal += GRAMMAR_HSK4.length;
+  if (typeof GRAMMAR_HSK5 !== 'undefined') grammarTotal += GRAMMAR_HSK5.length;
+  if (typeof GRAMMAR_HSK6 !== 'undefined') grammarTotal += GRAMMAR_HSK6.length;
+  if (typeof GRAMMAR_HSK79G !== 'undefined') grammarTotal += GRAMMAR_HSK79G.length;
+
+  let cards = [
+    { action:'open-review', icon:'🔤', title:'Tổng ôn HSK 1', sub:'300 từ', color:'#1A73E8', bg:'#E8F0FE' },
+    { action:'open-review2', icon:'🔤', title:'Tổng ôn HSK 2', sub:'200 từ', color:'#E37400', bg:'#FEF0E0' },
+    { action:'open-review3', icon:'🔤', title:'Tổng ôn HSK 3', sub:'500 từ', color:'#0F766E', bg:'#E0F2F1' },
+    { action:'open-grammar-all', icon:'📖', title:'Ngữ pháp tổng hợp', sub: grammarTotal+' điểm', color:'#C0392B', bg:'#FDEDEC' },
+  ];
+
+  let html = cards.map(function(c){
+    return '<div class="quick-card" data-action="' + c.action + '" style="--qc-color:' + c.color + ';--qc-bg:' + c.bg + '">' +
+      '<div class="quick-card-icon">' + c.icon + '</div>' +
+      '<div class="quick-card-title">' + c.title + '</div>' +
+      '<div class="quick-card-sub">' + c.sub + '</div>' +
+    '</div>';
+  }).join('');
+
+  return '<div class="section-title fade-in"><span class="section-icon">⚡</span> Luyện tập nhanh</div>' +
+    '<div class="quick-grid fade-in">' + html + '</div>';
 }
 
 function renderLevel(){
@@ -470,11 +491,11 @@ function renderLevel(){
 
 function renderReview(){
   const words=HSK1_ALL;
-  return '<div class="fade-in"><button class="back-btn" data-action="back-review">← Quay lại</button><div class="lesson-view-title">⭐ Tổng ôn từ vựng HSK1</div><div class="lesson-view-sub">300 từ · Có Hán Việt + Ví dụ câu</div><div class="mode-tabs"><button class="mode-tab '+(state.rMode==='list'?'active':'')+'" data-rmode="list">📋 Danh sách</button><button class="mode-tab '+(state.rMode==='flashcard'?'active':'')+'" data-rmode="flashcard">🃏 Lật thẻ</button><button class="mode-tab '+(state.rMode==='meaning'?'active':'')+'" data-rmode="meaning">✏️ Chọn nghĩa</button><button class="mode-tab '+(state.rMode==='word'?'active':'')+'" data-rmode="word">🔄 Chọn từ</button><button class="mode-tab '+(state.rMode==='hanviet'?'active':'')+'" data-rmode="fillin">📝 Điền từ</button><button class="mode-tab '+(state.rMode==='writing'?'active':'')+'" data-rmode="writing">✍️ Luyện viết</button></div>'+(state.rMode==='list'?renderReviewList():'')+(state.rMode==='flashcard'?renderReviewFC():'')+(state.rMode==='meaning'?renderReviewQuiz('meaning'):'')+(state.rMode==='word'?renderReviewQuiz('word'):'')+(state.rMode==='fillin'?renderFillIn():'')+(state.rMode==='writing'?renderWriting(null,'hsk1'):'')+'</div>';
+  return '<div class="fade-in"><button class="back-btn" data-action="back-review">← Quay lại</button><div class="lesson-view-title">⭐ Tổng ôn từ vựng HSK1</div><div class="lesson-view-sub">300 từ · Có Hán Việt + Ví dụ câu</div><div class="mode-tabs"><button class="mode-tab '+(state.rMode==='list'?'active':'')+'" data-rmode="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.rMode==='flashcard'?'active':'')+'" data-rmode="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.rMode==='meaning'?'active':'')+'" data-rmode="meaning">'+icon('pencil',14)+' Chọn nghĩa</button><button class="mode-tab '+(state.rMode==='word'?'active':'')+'" data-rmode="word">'+icon('shuffle',14)+' Chọn từ</button><button class="mode-tab '+(state.rMode==='hanviet'?'active':'')+'" data-rmode="fillin">'+icon('file-text',14)+' Điền từ</button><button class="mode-tab '+(state.rMode==='writing'?'active':'')+'" data-rmode="writing">'+icon('pen-line',14)+' Luyện viết</button></div>'+(state.rMode==='list'?renderReviewList():'')+(state.rMode==='flashcard'?renderReviewFC():'')+(state.rMode==='meaning'?renderReviewQuiz('meaning'):'')+(state.rMode==='word'?renderReviewQuiz('word'):'')+(state.rMode==='fillin'?renderFillIn():'')+(state.rMode==='writing'?renderWriting(null,'hsk1'):'')+'</div>';
 }
 
 function renderReviewList(){
-  let items=HSK1_ALL.map(w=>'<div class="word-item"><button class="audio-btn" data-speak="'+w.hanzi+'">🔊</button><div class="word-hanzi">'+w.hanzi+'</div><div class="word-info"><div class="word-pinyin">'+w.pinyin+' <span style="color:var(--md-sys-color-secondary);font-size:12px">'+w.hv+'</span></div><div class="word-meaning">'+w.vi+'</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:3px;line-height:1.4">'+w.ex+'</div></div><div class="word-pos">'+w.pos+'</div></div>').join('');
+  let items=HSK1_ALL.map(w=>'<div class="word-item"><button class="audio-btn" data-speak="'+w.hanzi+'">'+icon('volume-2',14)+'</button><div class="word-hanzi">'+w.hanzi+'</div><div class="word-info"><div class="word-pinyin">'+w.pinyin+' <span style="color:var(--md-sys-color-secondary);font-size:12px">'+w.hv+'</span></div><div class="word-meaning">'+w.vi+'</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:3px;line-height:1.4">'+w.ex+'</div></div><div class="word-pos">'+w.pos+'</div></div>').join('');
   return '<div class="toolbar"><span class="word-count">300 từ</span></div><div class="word-list">'+items+'</div>';
 }
 
@@ -502,13 +523,16 @@ function renderWriting(data, levelKey){
   let inputsHtml = dataArr.map((d, i) => {
     const userText = state.writingUserInputs[i] || '';
     const segs = (state.writingAiFeedback && state.writingAiFeedback.sentences) ? state.writingAiFeedback.sentences.find(s => s.step === i+1) : null;
+    const hasFeedback = state.writingAiFeedback && segs;
     return '<div class="writing-sentence-block">' +
       '<div class="writing-sentence-header">' +
         '<span class="writing-sentence-num">' + (i+1) + '</span>' +
         '<span class="writing-sentence-vi"><span class="writing-vi-tag">VI</span> ' + d.vi + '</span>' +
       '</div>' +
-      '<textarea class="writing-textarea" data-writing-input="' + i + '" placeholder="Nhập câu tiếng Trung..." rows="2">' + (userText || '') + '</textarea>' +
-      (segs ? renderColoredFeedback(segs) : '') +
+      (hasFeedback
+        ? '<div class="writing-colored-input">' + renderColoredSegments(segs) + '</div>'
+        : '<textarea class="writing-textarea" data-writing-input="' + i + '" placeholder="Nhập câu tiếng Trung..." rows="2">' + (userText || '') + '</textarea>'
+      ) +
     '</div>';
   }).join('');
 
@@ -537,9 +561,9 @@ function renderWriting(data, levelKey){
   '</div>';
 }
 
-function renderColoredFeedback(segs) {
+function renderColoredSegments(segs) {
   if (!segs || !segs.segments) return '';
-  let html = '<div class="writing-colored-feedback">';
+  let html = '';
   segs.segments.forEach((sg, i) => {
     if (sg.correct) {
       html += '<span class="seg-correct">' + sg.text + '</span>';
@@ -549,7 +573,6 @@ function renderColoredFeedback(segs) {
       html += '<span class="seg-wrong" data-seg-tip="' + tipId + '" onclick="event.stopPropagation();var el=document.getElementById(\'' + tipId + '\');var all=document.querySelectorAll(\'.seg-tip-popover\');all.forEach(function(p){if(p!==el)p.style.display=\'none\'});el.style.display=el.style.display===\'block\'?\'none\':\'block\'">' + sg.text + '<span class="seg-tip-popover" id="' + tipId + '">' + tipText + '</span></span>';
     }
   });
-  html += '</div>';
   return html;
 }
 
@@ -613,7 +636,7 @@ Với MỖI câu, hãy so sánh câu học sinh viết với đáp án mẫu, sa
 
 TRẢ VỀ CHỈ MỘT OBJECT JSON (không markdown):
 {
-  "overall": "Nhận xét tổng quan 1-2 câu",
+  "overall": "Nhận xét tổng quan 3-4 câu",
   "sentences": [
     {"step":1, "segments":[
       {"text":"我喜欢","correct":true},
@@ -765,7 +788,7 @@ function generateFillIn(){
 
 
 function renderReview2(){
-  return '<div class="fade-in"><button class="back-btn" data-action="back-review2">← Quay lại</button><div class="lesson-view-title">⭐ Tổng ôn từ vựng HSK2</div><div class="lesson-view-sub">200 từ · Có Hán Việt + Ví dụ câu</div><div class="mode-tabs"><button class="mode-tab '+(state.rMode==='list'?'active':'')+'" data-rmode2="list">📋 Danh sách</button><button class="mode-tab '+(state.rMode==='flashcard'?'active':'')+'" data-rmode2="flashcard">🃏 Lật thẻ</button><button class="mode-tab '+(state.rMode==='meaning'?'active':'')+'" data-rmode2="meaning">✏️ Chọn nghĩa</button><button class="mode-tab '+(state.rMode==='word'?'active':'')+'" data-rmode2="word">🔄 Chọn từ</button><button class="mode-tab '+(state.rMode==='fillin'?'active':'')+'" data-rmode2="fillin">📝 Điền từ</button><button class="mode-tab '+(state.rMode==='writing'?'active':'')+'" data-rmode2="writing">✍️ Luyện viết</button></div>'+(state.rMode==='list'?renderR2List():'')+(state.rMode==='flashcard'?renderR2FC():'')+(state.rMode==='meaning'?renderR2Quiz('meaning'):'')+(state.rMode==='word'?renderR2Quiz('word'):'')+(state.rMode==='fillin'?renderR2FillIn():'')+(state.rMode==='writing'?renderWriting(null,'hsk2'):'')+'</div>';
+  return '<div class="fade-in"><button class="back-btn" data-action="back-review2">← Quay lại</button><div class="lesson-view-title">⭐ Tổng ôn từ vựng HSK2</div><div class="lesson-view-sub">200 từ · Có Hán Việt + Ví dụ câu</div><div class="mode-tabs"><button class="mode-tab '+(state.rMode==='list'?'active':'')+'" data-rmode2="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.rMode==='flashcard'?'active':'')+'" data-rmode2="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.rMode==='meaning'?'active':'')+'" data-rmode2="meaning">'+icon('pencil',14)+' Chọn nghĩa</button><button class="mode-tab '+(state.rMode==='word'?'active':'')+'" data-rmode2="word">'+icon('shuffle',14)+' Chọn từ</button><button class="mode-tab '+(state.rMode==='fillin'?'active':'')+'" data-rmode2="fillin">'+icon('file-text',14)+' Điền từ</button><button class="mode-tab '+(state.rMode==='writing'?'active':'')+'" data-rmode2="writing">'+icon('pen-line',14)+' Luyện viết</button></div>'+(state.rMode==='list'?renderR2List():'')+(state.rMode==='flashcard'?renderR2FC():'')+(state.rMode==='meaning'?renderR2Quiz('meaning'):'')+(state.rMode==='word'?renderR2Quiz('word'):'')+(state.rMode==='fillin'?renderR2FillIn():'')+(state.rMode==='writing'?renderWriting(null,'hsk2'):'')+'</div>';
 }
 function renderR2List(){
   let items=HSK2_ALL.map(w=>'<div class="word-item"><button class="audio-btn" data-speak="'+w.hanzi+'">🔊</button><div class="word-hanzi">'+w.hanzi+'</div><div class="word-info"><div class="word-pinyin">'+w.pinyin+' <span style="color:var(--md-sys-color-secondary);font-size:12px">'+w.hv+'</span></div><div class="word-meaning">'+w.vi+'</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:3px;line-height:1.4">'+w.ex+'</div></div><div class="word-pos">'+w.pos+'</div></div>').join('');
@@ -819,7 +842,7 @@ function genR2FillIn(){
 
 
 function renderReview3(){
-  return '<div class="fade-in"><button class="back-btn" data-action="back-review3">← Quay lại</button><div class="lesson-view-title">⭐ Tổng ôn từ vựng HSK3</div><div class="lesson-view-sub">500 từ · Có Hán Việt + Ví dụ câu</div><div class="mode-tabs"><button class="mode-tab '+(state.rMode==='list'?'active':'')+'" data-rmode3="list">📋 Danh sách</button><button class="mode-tab '+(state.rMode==='flashcard'?'active':'')+'" data-rmode3="flashcard">🃏 Lật thẻ</button><button class="mode-tab '+(state.rMode==='meaning'?'active':'')+'" data-rmode3="meaning">✏️ Chọn nghĩa</button><button class="mode-tab '+(state.rMode==='word'?'active':'')+'" data-rmode3="word">🔄 Chọn từ</button><button class="mode-tab '+(state.rMode==='fillin'?'active':'')+'" data-rmode3="fillin">📝 Điền từ</button><button class="mode-tab '+(state.rMode==='writing'?'active':'')+'" data-rmode3="writing">✍️ Luyện viết</button></div>'+(state.rMode==='list'?r3List():'')+(state.rMode==='flashcard'?r3FC():'')+(state.rMode==='meaning'||state.rMode==='word'?r3Quiz(state.rMode):'')+(state.rMode==='fillin'?r3Fill():'')+(state.rMode==='writing'?renderWriting(null,'hsk3'):'')+'</div>';
+  return '<div class="fade-in"><button class="back-btn" data-action="back-review3">← Quay lại</button><div class="lesson-view-title">⭐ Tổng ôn từ vựng HSK3</div><div class="lesson-view-sub">500 từ · Có Hán Việt + Ví dụ câu</div><div class="mode-tabs"><button class="mode-tab '+(state.rMode==='list'?'active':'')+'" data-rmode3="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.rMode==='flashcard'?'active':'')+'" data-rmode3="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.rMode==='meaning'?'active':'')+'" data-rmode3="meaning">'+icon('pencil',14)+' Chọn nghĩa</button><button class="mode-tab '+(state.rMode==='word'?'active':'')+'" data-rmode3="word">'+icon('shuffle',14)+' Chọn từ</button><button class="mode-tab '+(state.rMode==='fillin'?'active':'')+'" data-rmode3="fillin">'+icon('file-text',14)+' Điền từ</button><button class="mode-tab '+(state.rMode==='writing'?'active':'')+'" data-rmode3="writing">'+icon('pen-line',14)+' Luyện viết</button></div>'+(state.rMode==='list'?r3List():'')+(state.rMode==='flashcard'?r3FC():'')+(state.rMode==='meaning'||state.rMode==='word'?r3Quiz(state.rMode):'')+(state.rMode==='fillin'?r3Fill():'')+(state.rMode==='writing'?renderWriting(null,'hsk3'):'')+'</div>';
 }
 function r3List(){
   let items=HSK3_ALL.map(w=>'<div class="word-item"><button class="audio-btn" data-speak="'+w.hanzi+'">🔊</button><div class="word-hanzi">'+w.hanzi+'</div><div class="word-info"><div class="word-pinyin">'+w.pinyin+' <span style="color:var(--md-sys-color-secondary);font-size:12px">'+w.hv+'</span></div><div class="word-meaning">'+w.vi+'</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:3px;line-height:1.4">'+w.ex+'</div></div><div class="word-pos">'+w.pos+'</div></div>').join('');
@@ -913,7 +936,7 @@ function renderHSK456Level(){
 function renderHSK456Set(){
   const d=getHSK456Data();const sets=getHSK456Sets();
   const s=sets.find(x=>x.id===state.lessonId);if(!s)return '';
-  return '<div class="fade-in"><button class="back-btn" data-action="back-456">← Quay lại</button><div class="lesson-view-title" style="font-size:26px">HSK '+d.num+' · Mục '+s.id+' <span style="font-size:16px;color:var(--md-sys-color-on-surface-variant)">(từ '+s.start+'–'+s.end+')</span></div><div class="lesson-view-sub">'+s.words.length+' từ vựng</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-m456="list">📋 Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-m456="flashcard">🃏 Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-m456="meaning">✏️ Chọn nghĩa</button><button class="mode-tab '+(state.mode==='fillin'?'active':'')+'" data-m456="fillin">📝 Điền từ</button></div>'+(state.mode==='list'?r456List(s,d):'')+(state.mode==='flashcard'?r456FC(s,d):'')+(state.mode==='meaning'?r456Quiz(s,d):'')+(state.mode==='fillin'?r456Fill(s,d):'')+'</div>';
+  return '<div class="fade-in"><button class="back-btn" data-action="back-456">← Quay lại</button><div class="lesson-view-title" style="font-size:26px">HSK '+d.num+' · Mục '+s.id+' <span style="font-size:16px;color:var(--md-sys-color-on-surface-variant)">(từ '+s.start+'–'+s.end+')</span></div><div class="lesson-view-sub">'+s.words.length+' từ vựng</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-m456="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-m456="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-m456="meaning">'+icon('pencil',14)+' Chọn nghĩa</button><button class="mode-tab '+(state.mode==='fillin'?'active':'')+'" data-m456="fillin">'+icon('file-text',14)+' Điền từ</button></div>'+(state.mode==='list'?r456List(s,d):'')+(state.mode==='flashcard'?r456FC(s,d):'')+(state.mode==='meaning'?r456Quiz(s,d):'')+(state.mode==='fillin'?r456Fill(s,d):'')+'</div>';
 }
 function r456List(s,d){
   return '<div class="word-list">'+s.words.map(w=>'<div class="word-item"><button class="audio-btn" data-speak="'+w.h+'">🔊</button><div class="word-hanzi">'+w.h+'</div><div class="word-info"><div class="word-pinyin">'+w.p+' <span style="color:var(--md-sys-color-secondary);font-size:12px">'+w.hv+'</span></div><div class="word-meaning">'+w.vi+'</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:3px">'+w.ex+'</div></div><div class="word-pos">'+w.ps+'</div></div>').join('')+'</div>';
@@ -988,6 +1011,51 @@ function getGrammarData(){
   return{data:GRAMMAR_HSK3,num:'3',color:'#27AE60'};
 }
 function getGrammarFlat(){const g=getGrammarData();return Object.values(g.data).flat()}
+
+function renderGrammarAll(){
+  const sections = [
+    { lv:'hsk1', data:typeof GRAMMAR_HSK1!=='undefined'?GRAMMAR_HSK1:null, num:'1', color:'#C0392B', label:'HSK 1' },
+    { lv:'hsk2', data:typeof GRAMMAR_HSK2!=='undefined'?GRAMMAR_HSK2:null, num:'2', color:'#E67E22', label:'HSK 2' },
+    { lv:'hsk3', data:typeof GRAMMAR_HSK3!=='undefined'?GRAMMAR_HSK3:null, num:'3', color:'#27AE60', label:'HSK 3' },
+    { lv:'hsk4', data:typeof GRAMMAR_HSK4!=='undefined'?GRAMMAR_HSK4:null, num:'4', color:'#2980B9', label:'HSK 4' },
+    { lv:'hsk5', data:typeof GRAMMAR_HSK5!=='undefined'?GRAMMAR_HSK5:null, num:'5', color:'#1ABC9C', label:'HSK 5' },
+    { lv:'hsk6', data:typeof GRAMMAR_HSK6!=='undefined'?GRAMMAR_HSK6:null, num:'6', color:'#F39C12', label:'HSK 6' },
+    { lv:'hsk79', data:typeof GRAMMAR_HSK79G!=='undefined'?GRAMMAR_HSK79G:null, num:'7-9', color:'#8E44AD', label:'HSK 7-9' },
+  ];
+
+  let html = '';
+  sections.forEach(function(sec){
+    if (!sec.data) return;
+    let points = Array.isArray(sec.data) ? sec.data : Object.values(sec.data).flat();
+    if (!points.length) return;
+
+    let items = points.map(function(p, i){
+      let pyHtml = p.py ? '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-style:italic;margin-bottom:4px">'+p.py+'</div>' : '';
+      let egHtml = '';
+      if (Array.isArray(p.eg)) {
+        egHtml = p.eg.map(function(e){ return '<div style="padding:5px 0;border-bottom:1px dotted #eee;line-height:1.7">'+e+'</div>'; }).join('');
+      } else if (p.eg) {
+        egHtml = '<div style="line-height:1.7">'+p.eg+'</div>';
+      }
+      return '<div class="word-item" style="grid-template-columns:auto 1fr">' +
+        '<div style="min-width:32px;text-align:center;font-weight:700;color:'+sec.color+';font-size:14px">'+(i+1)+'</div>' +
+        '<div class="word-info">' +
+          '<div style="font-family:Noto Sans SC,sans-serif;font-size:17px;font-weight:700;color:var(--md-sys-color-on-surface);margin-bottom:2px">'+p.cn+'</div>' +
+          pyHtml +
+          '<div style="font-size:14px;color:'+sec.color+';font-weight:600;margin-bottom:4px">'+p.vi+'</div>' +
+          (p.ex ? '<div style="font-size:13px;color:var(--md-sys-color-on-surface-variant);margin-bottom:8px">'+p.ex+'</div>' : '') +
+          '<div style="background:#f8f5f0;border-radius:10px;padding:10px 14px;font-size:13px;color:#555;font-family:Noto Sans SC,sans-serif">'+egHtml+'</div>' +
+        '</div></div>';
+    }).join('');
+
+    html += '<div class="grammar-all-section">' +
+      '<div class="section-title" style="margin-top:8px"><span class="badge" style="background:'+sec.color+'">HSK '+sec.num+'</span> Ngữ pháp '+sec.label+' <span style="font-size:13px;color:var(--md-sys-color-on-surface-variant);font-family:Be Vietnam Pro;font-weight:400">· '+points.length+' điểm</span></div>' +
+      '<div class="word-list">'+items+'</div></div>';
+  });
+
+  return '<div class="fade-in"><button class="back-btn" data-action="back-grammar-all">← Quay lại trang chủ</button><div class="lesson-view-title">📖 Ngữ pháp tổng hợp</div><div class="lesson-view-sub">Tất cả điểm ngữ pháp từ HSK 1 đến HSK 7-9</div>'+html+'</div>';
+}
+
 function _old_getGrammarData_unused(){
   if(state.level==='hsk1')return{data:GRAMMAR_HSK1,num:'1',color:'#C0392B'};
   if(state.level==='hsk2')return{data:GRAMMAR_HSK2,num:'2',color:'#E67E22'};
@@ -1006,7 +1074,7 @@ function renderGrammar(){
 }
 function _old_renderGrammar_unused(){
   const g=getGrammarData();
-  return '<div class="fade-in"><button class="back-btn" data-action="back-grammar">← Quay lại</button><div class="lesson-view-title">📖 Ngữ pháp HSK '+g.num+'</div><div class="lesson-view-sub">'+g.data.length+' điểm ngữ pháp</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-mgr="list">📋 Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-mgr="flashcard">🃏 Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-mgr="meaning">✏️ Trắc nghiệm</button></div>'+(state.mode==='list'?grList(g):'')+(state.mode==='flashcard'?grFC(g):'')+(state.mode==='meaning'?grQuiz(g):'')+'</div>';
+  return '<div class="fade-in"><button class="back-btn" data-action="back-grammar">← Quay lại</button><div class="lesson-view-title">📖 Ngữ pháp HSK '+g.num+'</div><div class="lesson-view-sub">'+g.data.length+' điểm ngữ pháp</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-mgr="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-mgr="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-mgr="meaning">'+icon('pencil',14)+' Trắc nghiệm</button></div>'+(state.mode==='list'?grList(g):'')+(state.mode==='flashcard'?grFC(g):'')+(state.mode==='meaning'?grQuiz(g):'')+'</div>';
 }
 
 function grList(g){
@@ -1089,7 +1157,7 @@ function renderHSK79Set(){
   const sets=getHSK79Sets();
   const s=sets.find(x=>x.id===state.lessonId);
   if(!s)return '';
-  return '<div class="fade-in"><button class="back-btn" data-action="back-hsk79">← Quay lại</button><div class="lesson-view-title" style="font-size:26px">HSK 7-9 · Mục '+s.id+' <span style="font-size:16px;color:var(--md-sys-color-on-surface-variant)">(từ '+s.start+'–'+s.end+')</span></div><div class="lesson-view-sub">'+s.words.length+' từ vựng nâng cao</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-m79="list">📋 Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-m79="flashcard">🃏 Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-m79="meaning">✏️ Chọn nghĩa</button><button class="mode-tab '+(state.mode==='fillin'?'active':'')+'" data-m79="fillin">📝 Điền từ</button></div>'+(state.mode==='list'?r79List(s):'')+(state.mode==='flashcard'?r79FC(s):'')+(state.mode==='meaning'?r79Quiz(s,state.mode):'')+(state.mode==='fillin'?r79Fill(s):'')+'</div>';
+  return '<div class="fade-in"><button class="back-btn" data-action="back-hsk79">← Quay lại</button><div class="lesson-view-title" style="font-size:26px">HSK 7-9 · Mục '+s.id+' <span style="font-size:16px;color:var(--md-sys-color-on-surface-variant)">(từ '+s.start+'–'+s.end+')</span></div><div class="lesson-view-sub">'+s.words.length+' từ vựng nâng cao</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-m79="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-m79="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-m79="meaning">'+icon('pencil',14)+' Chọn nghĩa</button><button class="mode-tab '+(state.mode==='fillin'?'active':'')+'" data-m79="fillin">'+icon('file-text',14)+' Điền từ</button></div>'+(state.mode==='list'?r79List(s):'')+(state.mode==='flashcard'?r79FC(s):'')+(state.mode==='meaning'?r79Quiz(s,state.mode):'')+(state.mode==='fillin'?r79Fill(s):'')+'</div>';
 }
 
 function r79List(s){
@@ -1155,7 +1223,7 @@ function renderLesson(){
   const lessons=getLessons();
   const lesson=lessons.find(l=>l.id===state.lessonId);
   if(!lesson)return '';
-  return '<div class="fade-in"><div><button class="back-btn" data-action="back">← Quay lại</button><div class="lesson-view-title">第'+lesson.id+'课 · '+lesson.title+'</div><div class="lesson-view-sub">'+lesson.titleVi+' — '+lesson.words.length+' từ vựng</div></div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-mode="list">📋 Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-mode="flashcard">🃏 Lật thẻ</button><button class="mode-tab '+(state.mode==='quiz'?'active':'')+'" data-mode="quiz">✏️ Trắc nghiệm</button></div>'+(state.mode==='list'?renderWordList(lesson):'')+(state.mode==='flashcard'?renderFlashcard(lesson):'')+(state.mode==='quiz'?renderQuiz(lesson):'')+'</div>';
+  return '<div class="fade-in"><div><button class="back-btn" data-action="back">← Quay lại</button><div class="lesson-view-title">第'+lesson.id+'课 · '+lesson.title+'</div><div class="lesson-view-sub">'+lesson.titleVi+' — '+lesson.words.length+' từ vựng</div></div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-mode="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-mode="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.mode==='quiz'?'active':'')+'" data-mode="quiz">'+icon('pencil',14)+' Trắc nghiệm</button></div>'+(state.mode==='list'?renderWordList(lesson):'')+(state.mode==='flashcard'?renderFlashcard(lesson):'')+(state.mode==='quiz'?renderQuiz(lesson):'')+'</div>';
 }
 
 function renderWordList(lesson){
@@ -1217,7 +1285,9 @@ function attachEvents(){
   document.querySelectorAll('[data-grammar-lesson]').forEach(c=>{c.onclick=()=>{state.lessonId=parseInt(c.dataset.grammarLesson);state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
   document.querySelectorAll('[data-action="back-grammar-lesson"]').forEach(b=>{b.onclick=()=>{state.lessonId=null;render()}});
   document.querySelectorAll('[data-action="open-grammar"]').forEach(b=>{b.onclick=()=>{state.view='grammar';state.level=b.dataset.glv;state.lessonId=null;state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
+  document.querySelectorAll('[data-action="open-grammar-all"]').forEach(b=>{b.onclick=()=>{state.view='grammarAll';state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
   document.querySelectorAll('[data-action="back-grammar"]').forEach(b=>{b.onclick=()=>{state.view='level';render();window.scrollTo({top:0})}});
+  document.querySelectorAll('[data-action="back-grammar-all"]').forEach(b=>{b.onclick=()=>{state.view='home';render();window.scrollTo({top:0})}});
   document.querySelectorAll('[data-mgr]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.mgr;state.fcShuffled=[];state.quizQuestions=[];render()}});
   document.querySelectorAll('[data-action="fc-shuffle-gr"]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const g=getGrammarData();var pts=state.lessonId?g.data[state.lessonId]:Object.values(g.data).flat();state.fcShuffled=shuffle(pts);state.fcIndex=0;state.fcFlipped=false;render()}});
   document.querySelectorAll('[data-action="quiz-restart-gr"]').forEach(b=>{b.onclick=()=>{const g=getGrammarData();var pts=state.lessonId?g.data[state.lessonId]:Object.values(g.data).flat();genGrQuiz({data:pts,num:g.num,color:g.color});render()}});

@@ -5,39 +5,39 @@
 
 /* ── Tokens ────────────────────────────── */
 :root {
-  /* Primary — muted crimson */
-  --md-sys-color-primary:        #904A46;
+  /* Primary — Google Blue */
+  --md-sys-color-primary:        #1A73E8;
   --md-sys-color-on-primary:     #FFFFFF;
-  --md-sys-color-primary-container: #FFDAD6;
-  --md-sys-color-on-primary-container: #3B0908;
+  --md-sys-color-primary-container: #D2E3FC;
+  --md-sys-color-on-primary-container: #062E6F;
 
   /* Secondary — warm ochre */
-  --md-sys-color-secondary:      #8C5800;
+  --md-sys-color-secondary:      #5F6368;
   --md-sys-color-on-secondary:   #FFFFFF;
-  --md-sys-color-secondary-container: #FFDDB3;
+  --md-sys-color-secondary-container: #E8EAED;
 
-  /* Tertiary — deep teal */
-  --md-sys-color-tertiary:       #356964;
+  /* Tertiary — teal */
+  --md-sys-color-tertiary:       #0F766E;
   --md-sys-color-on-tertiary:    #FFFFFF;
-  --md-sys-color-tertiary-container: #B8EFE9;
+  --md-sys-color-tertiary-container: #CCFBF1;
 
   /* Error */
-  --md-sys-color-error:          #BA1A1A;
-  --md-sys-color-error-container:#FFDAD6;
+  --md-sys-color-error:          #C5221F;
+  --md-sys-color-error-container:#FCE8E6;
 
-  /* Surfaces */
-  --md-sys-color-surface:        #FFFBFF;
-  --md-sys-color-surface-variant:#F5DDDA;
-  --md-sys-color-surface-dim:    #E7D8D5;
-  --md-sys-color-on-surface:     #201A19;
-  --md-sys-color-on-surface-variant: #534341;
+  /* Surfaces — warm cream */
+  --md-sys-color-surface:        #FFFFFF;
+  --md-sys-color-surface-variant:#F1F3F4;
+  --md-sys-color-surface-dim:    #E8EAED;
+  --md-sys-color-on-surface:     #1F1F1F;
+  --md-sys-color-on-surface-variant: #5F6368;
 
   /* Outlines */
-  --md-sys-color-outline:        #857371;
-  --md-sys-color-outline-variant:#D7C3C0;
+  --md-sys-color-outline:        #DADCE0;
+  --md-sys-color-outline-variant:#E8EAED;
 
-  /* Background */
-  --md-sys-color-background:     #FEF9F7;
+  /* Background — warm cream like tuviai */
+  --md-sys-color-background:     #FFF8E7;
 
   /* Shadow / Elevation */
   --md-elevation-1: 0 1px 3px 1px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.12);
@@ -52,14 +52,14 @@
   --md-shape-xl:  28px;
   --md-shape-full:9999px;
 
-  /* HSK brand accents (subtle, not overpowering) */
-  --hsk1-accent: #CD6A64;
-  --hsk2-accent: #D4893A;
-  --hsk3-accent: #4C9A6E;
-  --hsk4-accent: #5180A8;
-  --hsk5-accent: #8A5F9E;
-  --hsk6-accent: #B6596E;
-  --hsk79-accent:#7C5E8C;
+  /* HSK brand accents */
+  --hsk1-accent: #1A73E8;
+  --hsk2-accent: #E37400;
+  --hsk3-accent: #0F766E;
+  --hsk4-accent: #1A73E8;
+  --hsk5-accent: #7C3AED;
+  --hsk6-accent: #C5221F;
+  --hsk79-accent:#9334E6;
 
   /* Spacing scale */
   --space-xs:  4px;
@@ -75,27 +75,14 @@
 
 /* ── Base ──────────────────────────────── */
 body {
-  font-family: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-size:   15px;
   line-height: 1.6;
   color:       var(--md-sys-color-on-surface);
   min-height:  100vh;
   overflow-x:  hidden;
   -webkit-font-smoothing: antialiased;
-
-  /* photo background — misty mountain landscape, overlaid for readability */
-  background:
-    linear-gradient(
-      180deg,
-      rgba(254,249,247,.20) 0%,
-      rgba(254,249,247,.20) 100%
-    ),
-    url("https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&w=1920&q=70");
-
-  background-size: cover;
-  background-position: center 30%;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  background:  var(--md-sys-color-background);
 }
 
 /* ── Top App Bar ───────────────────────── */
@@ -206,6 +193,12 @@ body {
   text-align:  center;
   padding:     48px var(--space-md) 36px;
 }
+.hero-greeting {
+  font-size:   18px;
+  font-weight: 400;
+  color:       var(--md-sys-color-on-surface-variant);
+  margin-bottom: 4px;
+}
 .home-hero h1 {
   font-family: 'Noto Serif SC', serif;
   font-size:   36px;
@@ -213,6 +206,7 @@ body {
   color:       var(--md-sys-color-primary);
   margin-bottom: 6px;
   letter-spacing: -.5px;
+  line-height: 1.3;
 }
 .home-hero p {
   font-size:   14px;
@@ -292,8 +286,160 @@ body {
   color:       white;
   letter-spacing:.3px;
 }
+.section-icon {
+  font-size: 22px;
+  line-height: 1;
+}
 .badge-hsk1 { background: var(--hsk1-accent); }
 .badge-hsk2 { background: var(--hsk2-accent); }
+
+/* ── Level cards (homepage) ────────────── */
+.level-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap:                   12px;
+  margin-bottom:         10px;
+}
+.level-card {
+  background:      var(--md-sys-color-surface);
+  border:          1px solid var(--md-sys-color-outline-variant);
+  border-left:     4px solid var(--lv-color, var(--md-sys-color-primary));
+  border-radius:   var(--md-shape-md);
+  padding:         18px 20px;
+  cursor:          pointer;
+  transition:      box-shadow .2s, border-color .2s, transform .15s;
+  position:        relative;
+  overflow:        hidden;
+}
+.level-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 80px; height: 80px;
+  background: var(--lv-bg, #f0f0f0);
+  border-radius: 0 0 0 80px;
+  opacity: .5;
+  z-index: 0;
+}
+.level-card:hover {
+  border-color: var(--lv-color, var(--md-sys-color-primary));
+  box-shadow:   var(--md-elevation-2);
+  transform:    translateY(-2px);
+}
+.level-card-top {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-bottom:   10px;
+  position:        relative;
+  z-index:         1;
+}
+.level-card-badge {
+  width:        36px;
+  height:       36px;
+  border-radius: var(--md-shape-xs);
+  display:      flex;
+  align-items:  center;
+  justify-content: center;
+  color:        #fff;
+  font-size:    15px;
+  font-weight:  700;
+  font-family:  'Be Vietnam Pro', sans-serif;
+}
+.level-card-wordcount {
+  font-size:    11px;
+  color:        var(--md-sys-color-on-surface-variant);
+  font-weight:  500;
+}
+.level-card-title {
+  font-family:  'Noto Sans SC', sans-serif;
+  font-size:    20px;
+  font-weight:  700;
+  color:        var(--md-sys-color-on-surface);
+  margin-bottom: 2px;
+  position:     relative;
+  z-index:      1;
+}
+.level-card-cn {
+  font-family:  'Noto Serif SC', serif;
+  font-size:    13px;
+  color:        var(--lv-color, var(--md-sys-color-primary));
+  margin-bottom: 4px;
+  position:     relative;
+  z-index:      1;
+}
+.level-card-desc {
+  font-size:    11px;
+  color:        var(--md-sys-color-on-surface-variant);
+  margin-bottom: 8px;
+  position:     relative;
+  z-index:      1;
+}
+.level-card-arrow {
+  font-size:    16px;
+  color:        var(--lv-color, var(--md-sys-color-primary));
+  opacity:      .5;
+  transition:   opacity .2s, transform .2s;
+  text-align:   right;
+}
+.level-card:hover .level-card-arrow {
+  opacity:   1;
+  transform: translateX(4px);
+}
+
+/* ── Quick-action cards (homepage) ─────── */
+.quick-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap:                   10px;
+  margin-bottom:         20px;
+}
+.quick-card {
+  background:    var(--md-sys-color-surface);
+  border:        1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-shape-md);
+  padding:       16px 18px;
+  cursor:        pointer;
+  transition:    box-shadow .2s, border-color .2s, transform .15s;
+  display:       flex;
+  flex-direction: column;
+  align-items:   flex-start;
+  gap:           4px;
+  position:      relative;
+}
+.quick-card::before {
+  content:    '';
+  position:   absolute;
+  top:        0;
+  left:       0;
+  right:      0;
+  height:     3px;
+  background: var(--qc-color, var(--md-sys-color-primary));
+  border-radius: var(--md-shape-md) var(--md-shape-md) 0 0;
+  opacity:    .7;
+}
+.quick-card:hover {
+  border-color: var(--qc-color, var(--md-sys-color-primary));
+  box-shadow:   var(--md-elevation-2);
+  transform:    translateY(-1px);
+}
+.quick-card-icon {
+  font-size: 24px;
+}
+.quick-card-title {
+  font-size:   15px;
+  font-weight: 600;
+  color:       var(--md-sys-color-on-surface);
+}
+.quick-card-sub {
+  font-size: 12px;
+  color:     var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Grammar all view ──────────────────── */
+.grammar-all-section {
+  margin-bottom: 8px;
+}
 
 /* ── Lesson grid ───────────────────────── */
 .lesson-grid {
@@ -965,17 +1111,20 @@ body {
   line-height: 1.5;
 }
 
-/* Colored feedback segments */
-.writing-colored-feedback {
-  margin-top: 10px;
-  padding: 10px 12px;
+/* Colored input (replaces textarea after submit) */
+.writing-colored-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 14px 16px;
+  border: 2px solid var(--md-sys-color-outline-variant);
   border-radius: var(--md-shape-sm);
-  background: #F8F9FA;
-  border: 1px solid #E0E0E0;
   font-family: 'Noto Sans SC', sans-serif;
-  font-size: 18px;
-  line-height: 2;
-  word-break: break-all;
+  font-size: 20px;
+  line-height: 1.8;
+  background: #FAFAFA;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
 .seg-correct {
   background: #D5F5E3;
@@ -995,7 +1144,7 @@ body {
 }
 .seg-wrong:hover { background: #F5B7B1; }
 
-/* Popover tip inside seg-wrong */
+/* Popover tip above red text */
 .seg-tip-popover {
   display: none;
   position: absolute;
@@ -1003,28 +1152,31 @@ body {
   left: 0;
   background: #2C3E50;
   color: #fff;
-  font-size: 12px;
+  font-size: 13px;
   font-family: 'Be Vietnam Pro', sans-serif;
-  padding: 8px 12px;
-  border-radius: 6px;
-  max-width: 280px;
-  line-height: 1.5;
+  padding: 10px 14px;
+  border-radius: 8px;
+  max-width: min(320px, calc(100vw - 48px));
+  width: max-content;
+  line-height: 1.6;
   z-index: 999;
-  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
   white-space: normal;
   word-break: normal;
+  overflow-wrap: break-word;
+  text-align: left;
   pointer-events: none;
 }
 .seg-tip-popover::after {
   content: '';
   position: absolute;
   top: 100%;
-  left: 12px;
+  left: 16px;
   width: 0;
   height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid #2C3E50;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 7px solid #2C3E50;
 }
 
 /* Submit row */

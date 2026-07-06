@@ -2,8 +2,12 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   server: {
-    host: '0.0.0.0', // Cho phép truy cập từ network
+    host: '0.0.0.0',
     port: 5173,
-    allowedHosts: 'all' // Cho phép tất cả host khi dùng tunnel
+    allowedHosts: 'all'
   },
+  build: {
+    sourcemap: false,
+    minify: 'esbuild'
+  }
 });
