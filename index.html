@@ -13,6 +13,7 @@
 
 <script type="module">
 import { HSK1, HSK2, HSK1_ALL, HSK2_ALL, HSK3, HSK3_ALL, HSK4_ALL, HSK5_ALL, HSK6_ALL, HSK79_ALL } from '/src/data.js';
+import { searchWords } from '/src/api.js';
 
 // Freeze all static data → V8 bỏ qua mutation tracking → tiết kiệm ~30% RAM
 function deepFreeze(obj) {
