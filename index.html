@@ -1576,17 +1576,6 @@ function renderDictionary(){
 
   return '<div class="fade-in">'+html+'</div>';
 }
-      (state.dictSearch && display.length===0 ? '<div class="placeholder-box">Không tìm thấy từ nào khớp với "'+state.dictSearch+'"</div>' : '')+
-      '<div class="word-list">'+items+'</div>'+
-      (allWords.length > 100 ? '<div class="placeholder-box" style="margin-top:12px">Hiển thị 100/'+allWords.length+' từ. Nhập từ khóa để thu hẹp.</div>' : '');
-  }
-
-  return '<div class="fade-in">'+
-    '<div class="section-title"><span class="section-icon">📖</span> Từ điển & Ngữ pháp</div>'+
-    '<div class="dict-subtabs">'+subHtml+'</div>'+
-    contentHtml+
-  '</div>';
-}
 
 function renderGrammarAllContent(){
   var sections = [
