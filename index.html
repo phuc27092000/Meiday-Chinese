@@ -252,7 +252,7 @@ function icon(name, size) {
 // ═══════════════════════════════════════════
 // WRITING — Luyện viết câu với DeepSeek AI
 // ═══════════════════════════════════════════
-const DEEPSEEK_API_KEY = (typeof import!=='undefined'&&import.meta&&import.meta.env?import.meta.env.VITE_DEEPSEEK_KEY:'') || '';
+const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_KEY || '';
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 
 function getWritingWordPool() {
