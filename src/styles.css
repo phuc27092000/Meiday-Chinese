@@ -2536,6 +2536,19 @@ body {
 }
 .shuffle-btn:hover { border-color: var(--c-primary); }
 
+/* Flashcard done section */
+.fc-done-section { text-align: center; margin-top: 24px; padding: 20px; border-top: 1px solid var(--c-border); }
+.fc-done-icon { font-size: 40px; margin-bottom: 8px; }
+.fc-done-text { font-size: 15px; color: var(--c-text-muted); margin-bottom: 16px; }
+.fc-done-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 28px; border-radius: 28px; border: none;
+  background: var(--grad-primary); color: #fff;
+  font-family: var(--font-sans); font-size: 15px; font-weight: 600;
+  cursor: pointer; box-shadow: var(--shadow-primary); transition: all .2s;
+}
+.fc-done-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(37,99,235,.35); }
+
 /* Review tab horizontal */
 .review-lv-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; justify-content: center; }
 .review-lv-btn {

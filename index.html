@@ -1455,6 +1455,8 @@ function renderFCOnePage(){
       '<button class="fc-learn-btn '+(learned?'learned':'')+'" data-action="mark-learned">'+(learned?'✅ Đã thuộc':'📝 Đánh dấu đã thuộc')+'</button>'+
       '<button class="fc-learn-btn unlearned" data-action="mark-unlearned">🔄 Chưa thuộc</button>'+
     '</div>'+
+    // Show "Hoàn thành" when on last card
+    (state.fcIndex>=total-1?'<div class="fc-done-section"><div class="fc-done-icon">🎉</div><div class="fc-done-text">Bạn đã xem hết <strong>'+total+'</strong> từ trong bài này!</div><button class="fc-done-btn" data-action="go-review">'+icon('rotate-cw',16)+' Sang Ôn tập để luyện</button></div>':'')+
   '</div>';
 }
 
@@ -1511,6 +1513,10 @@ function generateSRQuiz(words,mode){
 }
 
 function renderSRSDashboard(){
+  // If actively reviewing, show flashcard or quiz
+  if(state._reviewMode==='flashcard'&&state.fcShuffled.length)return renderFCOnePage();
+  if(state._reviewMode&&state.quizQuestions.length){return state._reviewMode==='fillin'?renderFillInSRS():renderQuizSRS()}
+
   var levels=[{id:'hsk1',label:'HSK 1',words:typeof HSK1_ALL!=='undefined'?HSK1_ALL.length:0,locked:isLevelLocked('hsk1')},{id:'hsk2',label:'HSK 2',words:typeof HSK2_ALL!=='undefined'?HSK2_ALL.length:0,locked:isLevelLocked('hsk2')},{id:'hsk3',label:'HSK 3',words:typeof HSK3_ALL!=='undefined'?HSK3_ALL.length:0,locked:isLevelLocked('hsk3')}];
   var modes=[{id:'flashcard',icon:icon('columns-2',16),label:'Lật thẻ'},{id:'meaning',icon:icon('pencil',16),label:'Chọn nghĩa'},{id:'word',icon:icon('shuffle',16),label:'Chọn từ'},{id:'fillin',icon:icon('file-text',16),label:'Điền từ'}];
 
@@ -1740,11 +1746,16 @@ function attachEvents(){
       else if(state._reviewLevel==='hsk2'&&typeof HSK2_ALL!=='undefined')pool=HSK2_ALL;
       else if(state._reviewLevel==='hsk3'&&typeof HSK3_ALL!=='undefined')pool=HSK3_ALL;
       if(!pool.length)return;
-      var words=shuffle(pool).slice(0,20);
-      if(state._reviewMode==='flashcard'){state.fcShuffled=words;state.fcIndex=0;state.fcFlipped=false;state.mode='flashcard'}
-      else{generateSRQuiz(words,state._reviewMode)}
-      render();
+      var words=shuffle(pool.map(enrichWord)).slice(0,30);
+      state.fcShuffled=words;state.fcIndex=0;state.fcFlipped=false;
+      if(state._reviewMode==='flashcard'){state.quizQuestions=[];render()}
+      else if(state._reviewMode==='fillin'){generateSRQuiz(words,'fillin');render()}
+      else{generateSRQuiz(words,state._reviewMode);render()}
     };
+  });
+  // Lesson complete → go to Review tab
+  document.querySelectorAll('[data-action="go-review"]').forEach(function(b){
+    b.onclick=function(e){e.stopPropagation();state.tab='review';state._reviewLevel=state.level;state._reviewMode='flashcard';render();window.scrollTo({top:0})};
   });
   // ═══ GENERIC HANDLER (all data-action, including auth) ═══
   document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;if(a==='login'){sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});return}if(a==='logout'){sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();return}if(a==='toggle-user-menu'){state.showUserMenu=!state.showUserMenu;render();return}if(a==='profile'){state.tab='profile';state.showUserMenu=false;render();return}if(a==='back'){state.view='level';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words);state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
