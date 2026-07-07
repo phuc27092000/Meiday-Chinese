@@ -1876,7 +1876,8 @@ document.addEventListener('keydown',function(e){
     if(e.code==='KeyS'||e.code==='KeyR'){e.preventDefault();if(state.fcShuffled.length)speak(state.fcShuffled[state.fcIndex].hanzi)}
   }
 });
-// ═══ Supabase Auth: check session before first render ═══
+// ═══ Supabase Auth: show loading, check session, then render ═══
+document.getElementById('app').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh"><div style="text-align:center;color:var(--c-text-dim)">Đang tải...</div></div>';
 sb.auth.onAuthStateChange((event,session)=>{if(session?.user){state.isLoggedIn=true;state.user=session.user;render()}});
 sb.auth.getSession().then(({data})=>{if(data.session){state.isLoggedIn=true;state.user=data.session.user;}render();});
 </script>
