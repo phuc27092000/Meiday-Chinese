@@ -1672,6 +1672,25 @@ function renderProfile(){
 
 function attachEvents(){
   console.log('[ATTACH] events attaching, modeCards='+document.querySelectorAll('.rv-mode-card').length);
+  // ═══ REVIEW MODE CARDS — via event delegation on main ═══
+  var main=document.querySelector('.main');
+  if(main&&!main._hasReviewDelegation){
+    main._hasReviewDelegation=true;
+    main.addEventListener('click',function(e){
+      var card=e.target.closest('.rv-mode-card');
+      if(!card)return;
+      e.stopPropagation();
+      var mode=card.dataset.mode;
+      console.log('[REVIEW-CLICK] mode='+mode);
+      state._reviewLevel=state._reviewLevel||'hsk1';state._reviewMode=mode;state.quizDone=false;
+      var rvPool=state._reviewLevel==='hsk1'?HSK1_ALL:state._reviewLevel==='hsk2'?HSK2_ALL:HSK3_ALL;
+      if(!rvPool||!rvPool.length)rvPool=HSK1_ALL||[];
+      var rvWords=shuffle(rvPool.map(enrichWord)).slice(0,20);
+      state.fcShuffled=rvWords;state.fcIndex=0;state.fcFlipped=false;
+      if(mode!=='flashcard')generateSRQuiz(rvWords,mode);else state.quizQuestions=[];
+      render();
+    });
+  }
   // Bottom nav tabs
   document.querySelectorAll('[data-tab]').forEach(function(b){
     b.onclick=function(){
