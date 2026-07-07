@@ -1876,10 +1876,8 @@ document.addEventListener('keydown',function(e){
     if(e.code==='KeyS'||e.code==='KeyR'){e.preventDefault();if(state.fcShuffled.length)speak(state.fcShuffled[state.fcIndex].hanzi)}
   }
 });
-render();
-// ═══ Supabase Auth: check session on load ═══
+// ═══ Supabase Auth: check session before first render ═══
 sb.auth.onAuthStateChange((event,session)=>{if(session?.user){state.isLoggedIn=true;state.user=session.user;render()}});
-// Check existing session
-sb.auth.getSession().then(({data})=>{if(data.session){state.isLoggedIn=true;state.user=data.session.user;render()}});
+sb.auth.getSession().then(({data})=>{if(data.session){state.isLoggedIn=true;state.user=data.session.user;}render();});
 </script>
 <script type="module" src="/src/main.js"></script></body></html>
