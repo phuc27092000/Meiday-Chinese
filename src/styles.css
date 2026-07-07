@@ -2395,3 +2395,8 @@ body {
 }
 .profile-menu-item:hover { background: var(--c-bg); }
 .profile-menu-item:last-child { border-bottom: none; }
+
+/* Lock system */
+.level-card.locked { cursor: default; filter: grayscale(0.3); }
+.level-card.locked:hover { transform: none; box-shadow: var(--shadow-sm); }
+.level-card-lock { font-size: 12px; color: #94A3B8; margin-top: 8px; display: flex; align-items: center; gap: 4px; }

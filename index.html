@@ -467,16 +467,28 @@ function renderHomeHero(){
 
 function renderHomeLevelCards(){
   const levels = [
-    { lv:'hsk1', num:'1', name:'HSK 1', cn:'新HSK教程 1', color:'#1A73E8', bg:'#E8F0FE', words: getTotal(HSK1), desc:'Sơ cấp — 15 bài, 300 từ' },
-    { lv:'hsk2', num:'2', name:'HSK 2', cn:'新HSK教程 2', color:'#E37400', bg:'#FEF0E0', words: getTotal(HSK2), desc:'Sơ cấp — 15 bài, 200 từ' },
-    { lv:'hsk3', num:'3', name:'HSK 3', cn:'新HSK教程 3', color:'#0F766E', bg:'#E0F2F1', words: getTotal(HSK3), desc:'Trung cấp — 18 bài, 500 từ' },
-    { lv:'hsk4', num:'4', name:'HSK 4', cn:'HSK 四级', color:'#2980B9', bg:'#EBF5FB', words: (typeof HSK4_ALL!=='undefined'?HSK4_ALL.length:0), desc:'Trung cấp — '+(typeof HSK4_ALL!=='undefined'?Math.ceil(HSK4_ALL.length/20):0)+' mục' },
-    { lv:'hsk5', num:'5', name:'HSK 5', cn:'HSK 五级', color:'#1ABC9C', bg:'#E8F8F5', words: (typeof HSK5_ALL!=='undefined'?HSK5_ALL.length:0), desc:'Cao cấp — '+(typeof HSK5_ALL!=='undefined'?Math.ceil(HSK5_ALL.length/20):0)+' mục' },
-    { lv:'hsk6', num:'6', name:'HSK 6', cn:'HSK 六级', color:'#F39C12', bg:'#FEF5E7', words: (typeof HSK6_ALL!=='undefined'?HSK6_ALL.length:0), desc:'Cao cấp — '+(typeof HSK6_ALL!=='undefined'?Math.ceil(HSK6_ALL.length/20):0)+' mục' },
-    { lv:'hsk79', num:'7-9', name:'HSK 7-9', cn:'HSK 七–九级', color:'#9334E6', bg:'#F3E8FF', words: (typeof HSK79_ALL!=='undefined'?HSK79_ALL.length:0), desc:'Nâng cao — '+(typeof HSK79_ALL!=='undefined'?Math.ceil(HSK79_ALL.length/20):0)+' mục' },
+    { lv:'hsk1', num:'1', name:'HSK 1', cn:'新HSK教程 1', color:'#1A73E8', bg:'#E8F0FE', words: getTotal(HSK1), desc:'Sơ cấp — 15 bài, 300 từ', locked: false },
+    { lv:'hsk2', num:'2', name:'HSK 2', cn:'新HSK教程 2', color:'#E37400', bg:'#FEF0E0', words: getTotal(HSK2), desc:'Sơ cấp — 15 bài, 200 từ', locked: !state.isLoggedIn },
+    { lv:'hsk3', num:'3', name:'HSK 3', cn:'新HSK教程 3', color:'#0F766E', bg:'#E0F2F1', words: getTotal(HSK3), desc:'Trung cấp — 18 bài, 500 từ', locked: !state.isLoggedIn },
+    { lv:'hsk4', num:'4', name:'HSK 4', cn:'HSK 四级', color:'#2980B9', bg:'#EBF5FB', words: (typeof HSK4_ALL!=='undefined'?HSK4_ALL.length:0), desc:'Trung cấp — '+(typeof HSK4_ALL!=='undefined'?Math.ceil(HSK4_ALL.length/20):0)+' mục', locked: !state.isLoggedIn },
+    { lv:'hsk5', num:'5', name:'HSK 5', cn:'HSK 五级', color:'#1ABC9C', bg:'#E8F8F5', words: (typeof HSK5_ALL!=='undefined'?HSK5_ALL.length:0), desc:'Cao cấp — '+(typeof HSK5_ALL!=='undefined'?Math.ceil(HSK5_ALL.length/20):0)+' mục', locked: !state.isLoggedIn },
+    { lv:'hsk6', num:'6', name:'HSK 6', cn:'HSK 六级', color:'#F39C12', bg:'#FEF5E7', words: (typeof HSK6_ALL!=='undefined'?HSK6_ALL.length:0), desc:'Cao cấp — '+(typeof HSK6_ALL!=='undefined'?Math.ceil(HSK6_ALL.length/20):0)+' mục', locked: !state.isLoggedIn },
+    { lv:'hsk79', num:'7-9', name:'HSK 7-9', cn:'HSK 七–九级', color:'#9334E6', bg:'#F3E8FF', words: (typeof HSK79_ALL!=='undefined'?HSK79_ALL.length:0), desc:'Nâng cao — '+(typeof HSK79_ALL!=='undefined'?Math.ceil(HSK79_ALL.length/20):0)+' mục', locked: !state.isLoggedIn },
   ];
 
   let cards = levels.map(function(l){
+    if(l.locked){
+      return '<div class="level-card locked" style="--lv-color:#94A3B8;--lv-bg:#F1F5F9;opacity:0.7">' +
+        '<div class="level-card-top">' +
+          '<div class="level-card-badge" style="background:#94A3B8">'+l.num+'</div>' +
+          '<div class="level-card-wordcount">'+l.words+' từ</div>' +
+        '</div>' +
+        '<div class="level-card-title">'+l.name+'</div>' +
+        '<div class="level-card-cn">'+l.cn+'</div>' +
+        '<div class="level-card-desc">'+l.desc+'</div>' +
+        '<div class="level-card-lock">🔒 Đăng nhập để mở khóa</div>' +
+      '</div>';
+    }
     return '<div class="level-card" data-nav="level" data-lv="' + l.lv + '" style="--lv-color:' + l.color + ';--lv-bg:' + l.bg + '">' +
       '<div class="level-card-top">' +
         '<div class="level-card-badge" style="background:' + l.color + '">' + l.num + '</div>' +
@@ -1554,6 +1566,10 @@ function attachEvents(){
       render();
       window.scrollTo({top:0,behavior:'smooth'});
     };
+  });
+  // Locked level cards → trigger login
+  document.querySelectorAll('.level-card.locked').forEach(function(c){
+    c.onclick=function(){sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}})};
   });
   // Dictionary search
   var ds=document.querySelector('[data-dict-search]');
