@@ -1741,13 +1741,8 @@ function attachEvents(){
       render();
     };
   });
-  // ═══ AUTH HANDLERS ═══
-  document.querySelectorAll('[data-action="login"]').forEach(b=>{b.onclick=async(e)=>{e.stopPropagation();await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});}});
-  document.querySelectorAll('[data-action="logout"]').forEach(b=>{b.onclick=async(e)=>{e.stopPropagation();await sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();}});
-  document.querySelectorAll('[data-action="toggle-user-menu"]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();state.showUserMenu=!state.showUserMenu;render();}});
-  document.querySelectorAll('[data-action="profile"]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();state.tab='profile';state.showUserMenu=false;render();}});
-  // ═══ GENERIC HANDLER (must be AFTER specific handlers) ═══
-  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;if(a==='back'){state.view='level';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words);state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
+  // ═══ GENERIC HANDLER (all data-action, including auth) ═══
+  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;if(a==='login'){sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});return}if(a==='logout'){sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();return}if(a==='toggle-user-menu'){state.showUserMenu=!state.showUserMenu;render();return}if(a==='profile'){state.tab='profile';state.showUserMenu=false;render();return}if(a==='back'){state.view='level';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words);state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
   document.querySelectorAll('[data-mode]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.mode;if(state.mode==='flashcard')state.fcShuffled=[];if(state.mode==='quiz')state.quizQuestions=[];render()}});
   document.querySelectorAll('[data-hsk79set]').forEach(c=>{c.onclick=()=>{state.view='hsk79set';state.lessonId=parseInt(c.dataset.hsk79set);state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
   document.querySelectorAll('[data-m79]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.m79;state.fcShuffled=[];state.quizQuestions=[];render()}});
