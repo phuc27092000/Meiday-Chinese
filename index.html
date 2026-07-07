@@ -841,9 +841,8 @@ async function generateWriting() {
 }
 
 function renderReviewFC(){
-  if(!state.fcShuffled.length||state.fcShuffled[0].hv===undefined&&HSK1_ALL[0].hv!==undefined){state.fcShuffled=shuffle(HSK1_ALL);state.fcIndex=0;state.fcFlipped=false}
-  const w=state.fcShuffled[state.fcIndex];
-  return '<div class="flashcard-container"><div class="flashcard-progress">'+(state.fcIndex+1)+' / '+state.fcShuffled.length+'</div><div class="flashcard" data-action="flip"><div class="flashcard-inner '+(state.fcFlipped?'flipped':'')+'"><div class="flashcard-front"><div class="fc-hanzi">'+w.hanzi+'</div><div class="fc-hint">Nhấn hoặc Space để lật · ← → chuyển từ</div></div><div class="flashcard-back"><div class="fc-pinyin">'+w.pinyin+'</div><div style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:10px">'+w.hv+'</div><div class="fc-meaning">'+w.vi+'</div><div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:12px;line-height:1.5">'+w.ex+'</div></div></div></div><div class="fc-controls"><button class="fc-btn prev" data-action="fc-prev" '+(state.fcIndex===0?'disabled':'')+'>← Trước</button><button class="shuffle-btn" data-action="fc-shuffle-review">🔀 Xáo trộn</button><button class="fc-btn next" data-action="fc-next" '+(state.fcIndex>=state.fcShuffled.length-1?'disabled':'')+'>Tiếp →</button></div></div>';
+  if(!state.fcShuffled.length||state.fcShuffled[0].hv===undefined&&typeof HSK1_ALL!=='undefined'&&HSK1_ALL[0].hv!==undefined){state.fcShuffled=shuffle(HSK1_ALL);state.fcIndex=0;state.fcFlipped=false}
+  return renderFCOnePage();
 }
 
 function renderReviewQuiz(type){
@@ -916,8 +915,7 @@ function renderR2List(){
 }
 function renderR2FC(){
   if(!state.fcShuffled.length||!state.fcShuffled[0].hv){state.fcShuffled=shuffle(HSK2_ALL);state.fcIndex=0;state.fcFlipped=false}
-  const w=state.fcShuffled[state.fcIndex];
-  return '<div class="flashcard-container"><div class="flashcard-progress">'+(state.fcIndex+1)+' / '+state.fcShuffled.length+'</div><div class="flashcard" data-action="flip"><div class="flashcard-inner '+(state.fcFlipped?'flipped':'')+'"><div class="flashcard-front"><div class="fc-hanzi">'+w.hanzi+'</div><button class="audio-btn" data-speak="'+w.hanzi+'" style="font-size:28px;opacity:0.7;margin:8px 0" onclick="event.stopPropagation()">🔊</button><div class="fc-hint">Nhấn hoặc Space để lật · ← → chuyển từ</div></div><div class="flashcard-back"><div class="fc-pinyin">'+w.pinyin+'</div><div style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:10px">'+w.hv+'</div><div class="fc-meaning">'+w.vi+'</div><div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:12px;line-height:1.5">'+w.ex+'</div></div></div></div><div class="fc-controls"><button class="fc-btn prev" data-action="fc-prev" '+(state.fcIndex===0?'disabled':'')+'>← Trước</button><button class="shuffle-btn" data-action="fc-shuffle-r2">🔀 Xáo trộn</button><button class="fc-btn next" data-action="fc-next" '+(state.fcIndex>=state.fcShuffled.length-1?'disabled':'')+'>Tiếp →</button></div></div>';
+  return renderFCOnePage();
 }
 function renderR2Quiz(type){
   if(!state.quizQuestions.length||state.rQuizType!==('r2_'+type)){state.rQuizType='r2_'+type;genR2Quiz(type)}
@@ -970,8 +968,7 @@ function r3List(){
 }
 function r3FC(){
   if(!state.fcShuffled.length||!state.fcShuffled[0].hv){state.fcShuffled=shuffle(HSK3_ALL);state.fcIndex=0;state.fcFlipped=false}
-  const w=state.fcShuffled[state.fcIndex];
-  return '<div class="flashcard-container"><div class="flashcard-progress">'+(state.fcIndex+1)+' / '+state.fcShuffled.length+'</div><div class="flashcard" data-action="flip"><div class="flashcard-inner '+(state.fcFlipped?'flipped':'')+'"><div class="flashcard-front"><div class="fc-hanzi">'+w.hanzi+'</div><button class="audio-btn" data-speak="'+w.hanzi+'" style="font-size:28px;opacity:0.7;margin:8px 0" onclick="event.stopPropagation()">🔊</button><div class="fc-hint">Nhấn hoặc Space để lật · ← → chuyển từ</div></div><div class="flashcard-back"><div class="fc-pinyin">'+w.pinyin+'</div><div style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:10px">'+w.hv+'</div><div class="fc-meaning">'+w.vi+'</div><div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:12px;line-height:1.5">'+w.ex+'</div></div></div></div><div class="fc-controls"><button class="fc-btn prev" data-action="fc-prev" '+(state.fcIndex===0?'disabled':'')+'>← Trước</button><button class="shuffle-btn" data-action="fc-shuffle-r3">🔀 Xáo trộn</button><button class="fc-btn next" data-action="fc-next" '+(state.fcIndex>=state.fcShuffled.length-1?'disabled':'')+'>Tiếp →</button></div></div>';
+  return renderFCOnePage();
 }
 function r3Quiz(type){
   if(!state.quizQuestions.length||state.rQuizType!==('r3_'+type)){state.rQuizType='r3_'+type;genR3Quiz(type)}
@@ -1452,50 +1449,41 @@ function renderWordList(lesson){
 
 function renderFlashcard(lesson){
   if(!state.fcShuffled.length){state.fcShuffled=shuffle(lesson.words);state.fcIndex=0;state.fcFlipped=false}
+  return renderFCOnePage();
+}
+
+// Generic one-page flashcard renderer - used by all flashcard modes
+function renderFCOnePage(){
+  if(!state.fcShuffled.length)return'';
   const w=state.fcShuffled[state.fcIndex];
-  const learned=isWordLearned(w.hanzi);
+  const h=(w.hanzi||w.h||''), p=(w.pinyin||w.p||''), v=(w.vi||''), hv=(w.hv||''), pos=(w.pos||''), ex=(w.ex||'');
+  const learned=isWordLearned(h);
   const total=state.fcShuffled.length;
   const pct=Math.round((state.fcIndex+1)/total*100);
 
   return '<div class="fc-one-page">'+
-    // Progress bar
     '<div class="fc-progress-bar"><div class="fc-progress-fill" style="width:'+pct+'%"></div></div>'+
     '<div class="fc-progress-text">'+(state.fcIndex+1)+' / '+total+'</div>'+
-
-    // Main card
     '<div class="fc-card">'+
-      // Hanzi - largest element
-      '<div class="fc-hanzi-lg">'+w.hanzi+'</div>'+
-
-      // Pinyin + Hán Việt + Meaning
+      '<div class="fc-hanzi-lg">'+h+'</div>'+
       '<div class="fc-pinyin-row">'+
-        '<span class="fc-pinyin-lg">'+w.pinyin+'</span>'+
-        (w.hv?'<span class="fc-hv">'+w.hv+'</span>':'')+
+        '<span class="fc-pinyin-lg">'+p+'</span>'+
+        (hv?'<span class="fc-hv">'+hv+'</span>':'')+
       '</div>'+
-      '<div class="fc-meaning-lg">'+w.vi+'</div>'+
-      (w.pos?'<div class="fc-pos">'+w.pos+'</div>':'')+
-
-      // Audio + Stroke buttons
+      '<div class="fc-meaning-lg">'+v+'</div>'+
+      (pos?'<div class="fc-pos">'+pos+'</div>':'')+
       '<div class="fc-action-row">'+
-        '<button class="fc-action-btn" data-speak="'+w.hanzi+'" onclick="event.stopPropagation()">'+icon('volume-2',18)+' Phát âm</button>'+
+        '<button class="fc-action-btn" data-speak="'+h+'" onclick="event.stopPropagation()">'+icon('volume-2',18)+' Phát âm</button>'+
         '<button class="fc-action-btn" data-action="toggle-stroke" onclick="event.stopPropagation()">'+icon('pen-line',18)+' Xem cách viết</button>'+
       '</div>'+
-
-      // Stroke animation container
       '<div class="fc-stroke-container" id="fc-stroke-area" style="display:none"></div>'+
-
-      // Example sentence
-      (w.ex?'<div class="fc-example"><div class="fc-ex-label">📖 Ví dụ:</div><div class="fc-ex-text">'+w.ex+'</div></div>':'')+
+      (ex?'<div class="fc-example"><div class="fc-ex-label">📖 Ví dụ:</div><div class="fc-ex-text">'+ex+'</div></div>':'')+
     '</div>'+
-
-    // Navigation
     '<div class="fc-nav-row">'+
       '<button class="fc-btn prev" data-action="fc-prev" '+(state.fcIndex===0?'disabled':'')+'>← Trước</button>'+
       '<button class="shuffle-btn" data-action="fc-shuffle">🔀 Xáo trộn</button>'+
       '<button class="fc-btn next" data-action="fc-next" '+(state.fcIndex>=total-1?'disabled':'')+'>Tiếp →</button>'+
     '</div>'+
-
-    // Learn status
     '<div class="fc-learn-btns">'+
       '<button class="fc-learn-btn '+(learned?'learned':'')+'" data-action="mark-learned">'+(learned?'✅ Đã thuộc':'📝 Đánh dấu đã thuộc')+'</button>'+
       '<button class="fc-learn-btn unlearned" data-action="mark-unlearned">🔄 Chưa thuộc</button>'+
