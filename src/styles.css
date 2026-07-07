@@ -813,19 +813,17 @@ body {
 
 .level-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 12px;
 }
 .level-card {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--radius-md);
-  padding: 18px 14px;
+  padding: 18px 20px;
   cursor: pointer;
   transition: border-color .15s, box-shadow .15s, transform .12s;
   position: relative; overflow: hidden;
-  aspect-ratio: 1;
-  display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
 }
 .level-card:hover {
   border-color: var(--c-border-strong);
