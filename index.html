@@ -385,7 +385,7 @@ function generateLocalWritingData(subMode) {
 const SUPABASE_URL='https://gpmwzeurcwfiyxlomqsa.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbXd6ZXVyY3dmaXl4bG9tcXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTMwNzIsImV4cCI6MjA5ODAyOTA3Mn0.0G7W1OY6rqPDmzcPpGhNaUiDl6k9K0ijsME-dQjRujk';
 const sb = window.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'list',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,isVIP:false,showUserMenu:false,showMobileMenu:false,_reviewLevel:null,_reviewMode:null,_dictExpanded:null};
+let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'flashcard',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,isVIP:false,showUserMenu:false,showMobileMenu:false,_reviewLevel:null,_reviewMode:null,_dictExpanded:null};
 
 // ═══ LOCK SYSTEM: Guest→HSK1, Free→HSK1-2, VIP→ALL ═══
 function getMaxUnlockedLevel(){if(!state.isLoggedIn)return 1;if(!state.isVIP)return 2;return 9;}
@@ -1730,7 +1730,7 @@ function attachEvents(){
   });
   // Legacy nav buttons
   document.querySelectorAll('[data-nav]').forEach(b=>{b.onclick=()=>{if(b.dataset.nav==='home'){state.view='home'}else if(b.dataset.nav==='level'){state.view='level';state.level=b.dataset.lv}render();window.scrollTo({top:0,behavior:'smooth'})}});
-  document.querySelectorAll('[data-lesson]').forEach(c=>{c.onclick=()=>{const lv=c.dataset.lv;if(lv)state.level=lv;state.view='lesson';state.lessonId=parseInt(c.dataset.lesson);state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
+  document.querySelectorAll('[data-lesson]').forEach(c=>{c.onclick=()=>{const lv=c.dataset.lv;if(lv)state.level=lv;state.view='lesson';state.lessonId=parseInt(c.dataset.lesson);state.mode='flashcard';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
   // Lesson module cards (sequential flow)
   document.querySelectorAll('[data-lesson-module]').forEach(function(c){
     c.onclick=function(){
