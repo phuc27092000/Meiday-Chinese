@@ -637,9 +637,10 @@ function renderWriting(data, levelKey){
       '<div class="writing-sentence-header">' +
         '<span class="writing-sentence-num">' + (i+1) + '</span>' +
         '<span class="writing-sentence-vi">' + d.vi + '</span>' +
+        (segs&&segs.score!=null?'<span class="writing-score">'+segs.score+'/10</span>':'')+
       '</div>' +
       (hasFeedback
-        ? '<div class="writing-colored-input">' + renderColoredSegments(segs) + '<div class="writing-errors">' + renderWritingErrors(segs) + '</div></div>'
+        ? '<div class="writing-colored-input">' + renderColoredSegments(segs) + (segs.comment?'<div class="writing-comment">'+segs.comment+'</div>':'') + '<div class="writing-errors">' + renderWritingErrors(segs) + '</div></div>'
         : '<input type="text" class="writing-textarea" data-writing-input="' + i + '" placeholder="Nhập câu tiếng Trung..." value="' + (userText||'').replace(/"/g,'&quot;') + '">'
       ) +
     '</div>';
@@ -650,7 +651,10 @@ function renderWriting(data, levelKey){
   if (state.writingFeedbackLoading) {
     feedbackHtml = '<div class="writing-feedback-loading">'+icon('sparkles',16)+' AI đang chấm toàn bộ bài viết...</div>';
   } else if (state.writingAiFeedback) {
-    feedbackHtml = '<div class="writing-feedback">'+icon('message-square',16)+' <strong>AI nhận xét:</strong><br>' + (state.writingAiFeedback.overall || '') + '</div>';
+    var ts=state.writingAiFeedback.totalScore||0;
+    var ms=state.writingAiFeedback.maxScore||10;
+    var pct=Math.round(ts/ms*100);
+    feedbackHtml = '<div class="writing-feedback">'+icon('star',16)+' <strong>Tổng điểm: '+ts+'/'+ms+' ('+pct+'%)</strong><br>' + (state.writingAiFeedback.overall || '') + '</div>';
   }
 
   return '<div class="writing-container fade-in">' +
@@ -736,21 +740,30 @@ async function callDeepSeekGrading(subMode, writingData, userInputs) {
     return `Câu ${i+1}:\n- Tiếng Việt: ${d.vi}\n- Đáp án mẫu: ${d.zh}\n- Học sinh viết: ${user}`;
   }).join('\n\n');
 
-  const prompt = `Bạn là giáo viên tiếng Trung. Hãy chấm điểm TỪNG CÂU và phân tích THEO TỪNG KÝ TỰ/TỪ cho bài viết sau.
+  const prompt = `Bạn là giáo viên tiếng Trung. Hãy CHẤM ĐIỂM THANG 10 cho TỪNG CÂU học sinh viết.
 
 ${sentencesBlock}
 
-Với MỖI câu, hãy so sánh câu học sinh viết với đáp án mẫu, sau đó trả về các đoạn (segments) để tô màu:
-- Mỗi ký tự hoặc từ đúng → correct: true
-- Mỗi ký tự hoặc từ sai → correct: false, kèm "fix" (từ đúng) và "reason" (lý do ngắn bằng tiếng Việt)
+TIÊU CHÍ CHẤM (mỗi câu):
+- 9-10đ: Câu đúng hoàn toàn, tự nhiên, đúng ngữ pháp + từ vựng
+- 7-8đ: Câu đúng ý nhưng có 1-2 lỗi nhỏ
+- 5-6đ: Câu hiểu được nhưng sai vài từ hoặc ngữ pháp
+- 3-4đ: Câu sai nhiều, chỉ đúng một phần nhỏ
+- 0-2đ: Câu sai hoàn toàn hoặc không liên quan
+
+Với MỖI câu, trả về điểm số + giải thích ngắn + các đoạn text để tô màu:
+- Từ đúng → correct: true
+- Từ sai → correct: false, kèm "fix" (từ đúng) và "reason" (lý do ngắn tiếng Việt)
 
 TRẢ VỀ CHỈ MỘT OBJECT JSON (không markdown):
 {
-  "overall": "Nhận xét tổng quan 3-4 câu",
+  "overall": "Nhận xét tổng quan và tổng điểm",
+  "totalScore": 8.5,
+  "maxScore": 10,
   "sentences": [
-    {"step":1, "segments":[
+    {"step":1, "score":9, "maxScore":10, "comment":"Rất tốt! Chỉ sai dấu câu.", "segments":[
       {"text":"我喜欢","correct":true},
-      {"text":"狗","correct":false,"fix":"猫","reason":"Câu gốc nói về mèo, không phải chó"}
+      {"text":"狗","correct":false,"fix":"猫","reason":"Câu gốc nói về mèo"}
     ]},
     ...
   ]
