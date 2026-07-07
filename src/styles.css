@@ -2348,3 +2348,50 @@ body {
   .header-vip-btn { padding: 6px 10px; font-size: 11px; }
   .main { padding: var(--space-md); padding-bottom: 80px; }
 }
+
+/* ═══════════════════════════════════════════
+   GOOGLE AUTH & USER MENU
+   ═══════════════════════════════════════════ */
+.btn-google {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 10px 20px;
+  background: #fff; color: #444;
+  border: 1px solid #dadce0; border-radius: 24px;
+  font-family: 'Google Sans', var(--font-sans); font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  white-space: nowrap;
+}
+.btn-google:hover { background: #f8f9fa; box-shadow: 0 2px 8px rgba(0,0,0,.12); border-color: #c5c9cc; }
+.header-user {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 4px 12px; border-radius: 20px;
+  transition: background .15s;
+}
+.header-user:hover { background: rgba(0,0,0,.04); }
+.header-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid var(--c-primary-light);
+}
+.header-username { font-size: 13px; font-weight: 600; color: var(--c-text); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-dropdown {
+  position: absolute; top: 60px; right: 16px;
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.14);
+  padding: 8px; min-width: 180px;
+  z-index: 1000; animation: fadeIn .15s;
+}
+.user-dd-item {
+  padding: 10px 14px; border-radius: 8px;
+  font-size: 14px; cursor: pointer;
+  transition: background .15s;
+}
+.user-dd-item:hover { background: var(--c-bg); }
+.profile-menu { margin-top: 16px; }
+.profile-menu-item {
+  padding: 14px 16px; border-bottom: 1px solid var(--c-border);
+  font-size: 15px; cursor: pointer;
+  transition: background .15s;
+}
+.profile-menu-item:hover { background: var(--c-bg); }
+.profile-menu-item:last-child { border-bottom: none; }

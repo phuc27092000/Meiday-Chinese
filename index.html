@@ -7,28 +7,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/src/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body><script src="https://js.puter.com/v2/"></script>
+<body>
 <div id="app"></div>
 
 <script type="module">
 import { HSK1, HSK2, HSK1_ALL, HSK2_ALL, HSK3, HSK3_ALL, HSK4_ALL, HSK5_ALL, HSK6_ALL, HSK79_ALL } from '/src/data.js';
-import { searchWords } from '/src/api.js';
-
-// Freeze all static data → V8 bỏ qua mutation tracking → tiết kiệm ~30% RAM
-function deepFreeze(obj) {
-  if (obj === null || typeof obj !== 'object' || Object.isFrozen(obj)) return obj;
-  Object.freeze(obj);
-  Object.getOwnPropertyNames(obj).forEach(function(prop) {
-    var val = obj[prop];
-    if (val !== null && (typeof val === 'object' || typeof val === 'function') && !Object.isFrozen(val)) {
-      deepFreeze(val);
-    }
-  });
-  return obj;
-}
-[HSK1, HSK2, HSK3, HSK1_ALL, HSK2_ALL, HSK3_ALL, HSK4_ALL, HSK5_ALL, HSK6_ALL, HSK79_ALL].forEach(deepFreeze);
-// Also freeze grammar data when defined later — handled inline after each GRAMMAR_ declaration
 
 function toggleWordStrokes(el,hanzi){
   const existing=el.querySelector('.word-strokes');
@@ -386,77 +371,43 @@ function generateLocalWritingData(subMode) {
   }
 }
 
-// Freeze grammar data too
-[GRAMMAR_HSK1, GRAMMAR_HSK2, GRAMMAR_HSK3, GRAMMAR_HSK4, GRAMMAR_HSK5, GRAMMAR_HSK6, GRAMMAR_HSK79G].forEach(function(g) {
-  if (typeof g !== 'undefined') deepFreeze(g);
-});
-
-let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'list',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:true,userName:'Người học',userEmail:'nguoihoc@gmail.com',showUserMenu:false,showMobileMenu:false};
+// ═══ SUPABASE AUTH ═══
+const SUPABASE_URL='https://gpmwzeurcwfiyxlomqsa.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbXd6ZXVyY3dmaXl4bG9tcXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTMwNzIsImV4cCI6MjA5ODAyOTA3Mn0.0G7W1OY6rqPDmzcPpGhNaUiDl6k9K0ijsME-dQjRujk';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'list',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,showUserMenu:false,showMobileMenu:false};
 function getLessons(){return state.level==='hsk1'?HSK1:state.level==='hsk2'?HSK2:state.level==='hsk3'?HSK3:HSK2}
 function getAllWords(){return[...HSK1,...HSK2,...HSK3].flatMap(l=>l.words)}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function getTotal(arr){return arr.reduce((s,l)=>s+l.words.length,0)}
 
 function render(){
-  // Cleanup before destroying old DOM
-  hwInstances.forEach(function(w) { try { w.cancel() } catch(e) {} });
-  hwInstances = [];
-  expandedWord = null;
-
   const app=document.getElementById('app');
-  app.innerHTML=renderHeader()+renderMainContent()+renderBottomNav()+renderMobileMenu();
+  app.innerHTML=renderHeader()+renderMainContent()+renderBottomNav();
   attachEvents();
 }
 
 function renderHeader(){
-  var levelLabel = '';
-  if (state.view === 'level') {
-    var lvMap = {hsk1:'HSK 1',hsk2:'HSK 2',hsk3:'HSK 3',hsk4:'HSK 4',hsk5:'HSK 5',hsk6:'HSK 6',hsk79:'HSK 7-9'};
-    levelLabel = '<span class="header-level-badge">'+ (lvMap[state.level]||'') +'</span>';
-  }
-
-  var rightHtml = '';
-  if (state.isLoggedIn) {
-    rightHtml = '<div class="user-profile" data-action="toggle-user-menu">'+
-      '<span class="user-avatar-icon">👤</span>'+
-      '<div class="user-info-header"><span class="user-name-header">'+state.userName+'</span><span class="user-email-header">'+state.userEmail+'</span></div>'+
-      '<span class="user-dropdown-arrow '+(state.showUserMenu?'open':'')+'">▾</span>'+
+  var right='';
+  if(state.isLoggedIn&&state.user){
+    right='<div class="header-user" data-action="toggle-user-menu">'+
+      '<img src="'+state.user.user_metadata.avatar_url+'" class="header-avatar" alt="">'+
+      '<span class="header-username">'+state.user.user_metadata.full_name+'</span>'+
+      '<span style="font-size:10px">▾</span>'+
     '</div>';
-    if (state.showUserMenu) {
-      rightHtml += '<div class="user-dropdown-overlay" data-action="close-user-menu"></div>'+
-      '<div class="user-dropdown">'+
-        '<div class="user-dropdown-header"><span class="user-avatar-large">👤</span><div class="user-details"><h4>'+state.userName+'</h4><p>'+state.userEmail+'</p><span class="vip-status">💎 VIP PRO</span></div></div>'+
-        '<div class="user-dropdown-menu">'+
-          '<button class="dropdown-item" data-action="go-profile"><span>📊</span> Hồ sơ & Thống kê</button>'+
-          '<button class="dropdown-item" data-action="go-review"><span>🔄</span> Ôn tập thông minh</button>'+
-          '<button class="dropdown-item" data-action="go-dict"><span>📖</span> Từ điển</button>'+
-          '<button class="dropdown-item" style="color:var(--c-error)" data-action="logout"><span>🚪</span> Đăng xuất</button>'+
-        '</div>'+
-      '</div>';
-    }
-  } else {
-    rightHtml = '<button class="header-login-btn" data-action="login">Đăng nhập</button>';
+  }else{
+    right='<button class="btn-google" data-action="login">'+
+      '<svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>'+
+      '<span>Đăng nhập với Google</span>'+
+    '</button>';
   }
-
   return '<div class="header">'+
-    '<div class="header-inner">'+
-      '<a class="header-logo-link" data-header-nav="home">'+
-        '<div class="header-logo-icon">梅</div>'+
-        '<div class="header-brand"><div class="header-brand-title">Meiday Chinese</div><div class="header-brand-sub">Học Tiếng Trung</div></div>'+
-      '</a>'+
-      '<nav class="header-nav">'+
-        '<button class="header-nav-item'+(state.view==='home'?' active':'')+'" data-header-nav="home">Trang chủ</button>'+
-        '<button class="header-nav-item'+((state.view==='level'||state.view==='lesson')?' active':'')+'" data-header-nav="hsk">Giáo trình HSK</button>'+
-        '<button class="header-nav-item" data-header-nav="review">Ôn tập</button>'+
-        '<button class="header-nav-item" data-header-nav="dict">Từ điển</button>'+
-      '</nav>'+
-      '<div class="header-actions">'+
-        levelLabel+
-        '<button class="header-btn header-search-btn" data-header-nav="dict" title="Tìm kiếm">🔍</button>'+
-        '<button class="header-btn header-menu-btn" data-action="toggle-mobile-menu" title="Menu">☰</button>'+
-        rightHtml+
-      '</div>'+
+    '<div class="header-left">'+
+      '<div class="header-logo">梅</div>'+
+      '<span class="header-title">Meiday Chinese</span>'+
     '</div>'+
+    '<div class="header-right">'+right+'</div>'+
+    (state.showUserMenu?'<div class="user-dropdown"><div class="user-dd-item" data-action="profile">👤 Hồ sơ</div><div class="user-dd-item" data-action="logout">🚪 Đăng xuất</div></div>':'')+
   '</div>';
 }
 
@@ -498,45 +449,6 @@ function renderBottomNav(){
   return '<nav class="bottom-nav">'+html+'</nav>';
 }
 
-function renderMobileMenu(){
-  if (!state.showMobileMenu) return '';
-
-  var menuItems = [
-    {action:'home', icon:'🏠', label:'Trang chủ'},
-    {action:'hsk', icon:'📚', label:'Giáo trình'},
-    {action:'review', icon:'🔄', label:'Ôn tập'},
-    {action:'dict', icon:'📖', label:'Từ điển'},
-    {action:'profile', icon:'👤', label:'Hồ sơ'},
-    {action:'grammar', icon:'📝', label:'Ngữ pháp'},
-  ];
-
-  var gridHtml = menuItems.map(function(m){
-    return '<div class="mm-item" data-mobile-nav="'+m.action+'"><div class="mm-item-icon">'+m.icon+'</div><div>'+m.label+'</div></div>';
-  }).join('');
-
-  var userSection = '';
-  if (state.isLoggedIn) {
-    userSection = '<div class="mm-user-card"><span class="mm-avatar">👤</span><div class="mm-user-info"><div class="mm-user-name">'+state.userName+'</div><div class="mm-user-email">'+state.userEmail+'</div><span class="mm-vip-badge">💎 VIP PRO</span></div></div>';
-  } else {
-    userSection = '<div style="display:flex;gap:10px"><button class="mm-btn mm-btn-login" data-action="login">Đăng nhập</button></div>';
-  }
-
-  return '<div class="mobile-menu-overlay show" data-action="toggle-mobile-menu">'+
-    '<div class="mobile-menu-panel" onclick="event.stopPropagation()">'+
-      '<div class="mm-header">'+
-        '<div class="mm-header-top"><span class="mm-logo">Meiday Chinese</span><button class="mm-close-btn" data-action="toggle-mobile-menu">✕</button></div>'+
-        userSection+
-      '</div>'+
-      '<div class="mm-nav-body">'+
-        '<div class="mm-section-label">Danh mục</div>'+
-        '<div class="mm-grid">'+gridHtml+'</div>'+
-        '<div class="placeholder-box" style="margin-top:16px"><span class="placeholder-box-icon">📊</span> Streak: 0 ngày · 0 từ đã học</div>'+
-        (state.isLoggedIn ? '<button style="width:100%;margin-top:12px;padding:12px;border:1px solid var(--c-error);border-radius:var(--radius-md);background:none;color:var(--c-error);font-weight:600;cursor:pointer;font-family:var(--font-sans)" data-action="logout">🚪 Đăng xuất</button>' : '')+
-      '</div>'+
-    '</div>'+
-  '</div>';
-}
-
 function renderHome(){
   return renderHomeHero() + renderHomeLevelCards() + renderHomeQuickActions();
 }
@@ -554,46 +466,31 @@ function renderHomeHero(){
 }
 
 function renderHomeLevelCards(){
-  var sampleChars = {
-    hsk1: ['你','好','学','生','大','小','人','一','不','了'],
-    hsk2: ['朋','友','习','工','作','家','爱','吃','喝','去'],
-    hsk3: ['努','力','帮','助','旅','游','环','境','健','康'],
-    hsk4: ['机','会','发','展','经','济','科','学','艺','术'],
-    hsk5: ['哲','学','政','治','文','化','社','会','历','史'],
-    hsk6: ['深','刻','广','泛','精','神','传','统','价','值'],
-    hsk79:['宏','观','微','观','辩','证','逻','辑','抽','象'],
-  };
-  var levels = [
-    { lv:'hsk1', num:'1', label:'CƠ BẢN', cnIcon:'你', color:'#2B3A67', words: getTotal(HSK1), lessons: 15, time:'2-3 tháng', desc:'Cấp độ cơ bản nhất, học 300 từ vựng thiết yếu' },
-    { lv:'hsk2', num:'2', label:'CƠ BẢN', cnIcon:'朋', color:'#C45C3A', words: getTotal(HSK2), lessons: 15, time:'3-4 tháng', desc:'Mở rộng từ vựng lên 300 từ, học ngữ pháp cơ bản' },
-    { lv:'hsk3', num:'3', label:'TRUNG BÌNH', cnIcon:'努', color:'#2D7D46', words: getTotal(HSK3), lessons: 18, time:'4-5 tháng', desc:'Nâng cao với 600 từ vựng và ngữ pháp phức tạp hơn' },
-    { lv:'hsk4', num:'4', label:'TRUNG BÌNH', cnIcon:'机', color:'#1A6B8A', words: (typeof HSK4_ALL!=='undefined'?HSK4_ALL.length:0), lessons: (typeof HSK4_ALL!=='undefined'?Math.ceil(HSK4_ALL.length/20):0), time:'6-8 tháng', desc:'Thành thạo '+(typeof HSK4_ALL!=='undefined'?HSK4_ALL.length:0)+' từ, có thể giao tiếp tự nhiên' },
-    { lv:'hsk5', num:'5', label:'NÂNG CAO', cnIcon:'经', color:'#6B3FA0', words: (typeof HSK5_ALL!=='undefined'?HSK5_ALL.length:0), lessons: (typeof HSK5_ALL!=='undefined'?Math.ceil(HSK5_ALL.length/20):0), time:'8-12 tháng', desc:'Trình độ cao với '+(typeof HSK5_ALL!=='undefined'?HSK5_ALL.length:0)+' từ vựng và văn bản phức tạp' },
-    { lv:'hsk6', num:'6', label:'CHUYÊN GIA', cnIcon:'哲', color:'#B8432E', words: (typeof HSK6_ALL!=='undefined'?HSK6_ALL.length:0), lessons: (typeof HSK6_ALL!=='undefined'?Math.ceil(HSK6_ALL.length/20):0), time:'12+ tháng', desc:'Cấp độ cao nhất với '+(typeof HSK6_ALL!=='undefined'?HSK6_ALL.length:0)+'+ từ vựng và văn học' },
-    { lv:'hsk79', num:'7-9', label:'NÂNG CAO', cnIcon:'宏', color:'#7B2D8E', words: (typeof HSK79_ALL!=='undefined'?HSK79_ALL.length:0), lessons: (typeof HSK79_ALL!=='undefined'?Math.ceil(HSK79_ALL.length/20):0), time:'Tùy chỉnh', desc:'Từ vựng học thuật & chuyên ngành' },
+  const levels = [
+    { lv:'hsk1', num:'1', name:'HSK 1', cn:'新HSK教程 1', color:'#1A73E8', bg:'#E8F0FE', words: getTotal(HSK1), desc:'Sơ cấp — 15 bài, 300 từ' },
+    { lv:'hsk2', num:'2', name:'HSK 2', cn:'新HSK教程 2', color:'#E37400', bg:'#FEF0E0', words: getTotal(HSK2), desc:'Sơ cấp — 15 bài, 200 từ' },
+    { lv:'hsk3', num:'3', name:'HSK 3', cn:'新HSK教程 3', color:'#0F766E', bg:'#E0F2F1', words: getTotal(HSK3), desc:'Trung cấp — 18 bài, 500 từ' },
+    { lv:'hsk4', num:'4', name:'HSK 4', cn:'HSK 四级', color:'#2980B9', bg:'#EBF5FB', words: (typeof HSK4_ALL!=='undefined'?HSK4_ALL.length:0), desc:'Trung cấp — '+(typeof HSK4_ALL!=='undefined'?Math.ceil(HSK4_ALL.length/20):0)+' mục' },
+    { lv:'hsk5', num:'5', name:'HSK 5', cn:'HSK 五级', color:'#1ABC9C', bg:'#E8F8F5', words: (typeof HSK5_ALL!=='undefined'?HSK5_ALL.length:0), desc:'Cao cấp — '+(typeof HSK5_ALL!=='undefined'?Math.ceil(HSK5_ALL.length/20):0)+' mục' },
+    { lv:'hsk6', num:'6', name:'HSK 6', cn:'HSK 六级', color:'#F39C12', bg:'#FEF5E7', words: (typeof HSK6_ALL!=='undefined'?HSK6_ALL.length:0), desc:'Cao cấp — '+(typeof HSK6_ALL!=='undefined'?Math.ceil(HSK6_ALL.length/20):0)+' mục' },
+    { lv:'hsk79', num:'7-9', name:'HSK 7-9', cn:'HSK 七–九级', color:'#9334E6', bg:'#F3E8FF', words: (typeof HSK79_ALL!=='undefined'?HSK79_ALL.length:0), desc:'Nâng cao — '+(typeof HSK79_ALL!=='undefined'?Math.ceil(HSK79_ALL.length/20):0)+' mục' },
   ];
 
-  var cards = levels.map(function(l){
-    var samples = (sampleChars[l.lv] || []).slice(0,3).map(function(c){ return '<span class="hsk-sample-char">'+c+'</span>'; }).join(' ');
-    return '<div class="hsk-level-card" data-nav="level" data-lv="'+l.lv+'">'+
-      '<div class="hsk-level-icon" style="background:'+l.color+'">'+l.cnIcon+'</div>'+
-      '<div class="hsk-level-info">'+
-        '<div class="hsk-level-header">'+
-          '<span class="hsk-level-num" style="color:'+l.color+'">HSK '+l.num+'</span>'+
-          '<span class="hsk-level-label">'+l.label+'</span>'+
-        '</div>'+
-        '<div class="hsk-level-desc">'+l.desc+'</div>'+
-        '<div class="hsk-level-meta">'+
-          '<span>'+l.lessons+' bài</span>'+
-          '<span>'+l.time+'</span>'+
-        '</div>'+
-        '<div class="hsk-level-samples">'+samples+' <span style="font-size:11px;color:var(--c-text-dim)">Vào học →</span></div>'+
-      '</div>'+
+  let cards = levels.map(function(l){
+    return '<div class="level-card" data-nav="level" data-lv="' + l.lv + '" style="--lv-color:' + l.color + ';--lv-bg:' + l.bg + '">' +
+      '<div class="level-card-top">' +
+        '<div class="level-card-badge" style="background:' + l.color + '">' + l.num + '</div>' +
+        '<div class="level-card-wordcount">' + l.words + ' từ</div>' +
+      '</div>' +
+      '<div class="level-card-title">' + l.name + '</div>' +
+      '<div class="level-card-cn">' + l.cn + '</div>' +
+      '<div class="level-card-desc">' + l.desc + '</div>' +
+      '<div class="level-card-arrow">→</div>' +
     '</div>';
   }).join('');
 
-  return '<div class="section-title fade-in"><span class="section-icon">📚</span> Giáo trình HSK <span style="font-size:13px;color:var(--c-text-muted);font-weight:400">— '+levels.length+' cấp độ · Lộ trình hoàn chỉnh</span></div>'+
-    '<div class="hsk-level-list fade-in">'+cards+'</div>';
+  return '<div class="section-title fade-in"><span class="section-icon">📚</span> Chọn cấp độ học</div>' +
+    '<div class="level-grid fade-in">' + cards + '</div>';
 }
 
 function renderHomeQuickActions(){
@@ -639,7 +536,7 @@ function renderLevel(){
   if(state.level==='hsk2'&&typeof GRAMMAR_HSK2!=='undefined'){const gt=Object.values(GRAMMAR_HSK2).flat().length;grammarCard='<div class="lesson-card" style="border:2px dashed #E67E22;background:linear-gradient(135deg,#FFF8F0,#FFF3E8)" data-action="open-grammar" data-glv="hsk2"><div class="lesson-num" style="color:#E67E22">📖 Ngữ pháp HSK 2</div><div class="lesson-title-cn" style="font-size:18px">'+gt+' điểm ngữ pháp</div><div class="lesson-title-vi">Lý thuyết + Ví dụ theo từng bài</div></div>'}
   let reviewCard=state.level==='hsk1'?'<div class="lesson-card review-card" data-action="open-review"><div class="lesson-num" style="color:var(--md-sys-color-secondary)">⭐ Tổng ôn từ vựng</div><div class="lesson-title-cn">300 từ HSK1</div><div class="lesson-title-vi">Flashcard · Trắc nghiệm · Điền từ</div><div class="lesson-meta"><span class="lesson-tag" style="background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)">300 từ</span></div></div>':'<div class="lesson-card review-card hsk2" data-action="open-review2"><div class="lesson-num" style="color:var(--md-sys-color-secondary)">⭐ Tổng ôn từ vựng</div><div class="lesson-title-cn">200 từ HSK2</div><div class="lesson-title-vi">Flashcard · Trắc nghiệm · Điền từ</div><div class="lesson-meta"><span class="lesson-tag" style="background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)">200 từ</span></div></div>';
   let cards=lessons.map(l=>'<div class="lesson-card'+colorCls+'" data-lesson="'+l.id+'" data-lv="'+state.level+'"><div class="lesson-num">第'+l.id+'课 · Bài '+l.id+'</div><div class="lesson-title-cn">'+l.title+'</div><div class="lesson-title-vi">'+l.titleVi+'</div><div class="lesson-meta"><span class="lesson-tag">'+l.words.length+' từ</span></div></div>').join('');
-  return '<div class="fade-in"><button class="back-btn" data-action="back-level">← Chọn cấp độ khác</button><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge badge-'+state.level+'">HSK '+lvNum+'</span> <span style="font-family:Noto Serif SC,serif">新HSK教程 '+lvNum+'</span></div><p style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+total+' từ vựng · 15 bài học</p></div><div class="lesson-grid">'+reviewCard+grammarCard+cards+'</div></div>';
+  return '<div class="fade-in"><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge badge-'+state.level+'">HSK '+lvNum+'</span> <span style="font-family:Noto Serif SC,serif">新HSK教程 '+lvNum+'</span></div><p style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+total+' từ vựng · 15 bài học</p></div><div class="lesson-grid">'+reviewCard+grammarCard+cards+'</div></div>';
 }
 
 
@@ -1085,7 +982,7 @@ function renderHSK456Level(){
   const gData={hsk4:GRAMMAR_HSK4,hsk5:GRAMMAR_HSK5,hsk6:GRAMMAR_HSK6}[state.level];
   let grammarCard456=gData?'<div class="lesson-card" style="border:2px dashed '+d.color+';background:linear-gradient(135deg,#FAFAFA,#F5F5F5);cursor:pointer" data-action="open-grammarAdv" data-glv="'+state.level+'"><div class="lesson-num" style="color:'+d.color+'">📖 Ngữ pháp HSK '+d.num+'</div><div class="lesson-title-cn" style="font-size:18px">'+gData.length+' điểm ngữ pháp</div><div class="lesson-title-vi">Phân loại theo nhóm</div></div>':'';
   let cards=sets.map(s=>'<div class="lesson-card" style="border-left:3px solid '+d.color+'" data-hsk456set="'+s.id+'"><div class="lesson-num" style="color:'+d.color+'">Mục '+s.id+'</div><div class="lesson-title-cn" style="font-size:17px">Từ '+s.start+' – '+s.end+'</div><div class="lesson-title-vi" style="font-size:12px">'+s.words.slice(0,5).map(w=>w.h).join(' · ')+'…</div><div class="lesson-meta"><span class="lesson-tag" style="background:'+d.bg+';color:'+d.color+'">'+s.words.length+' từ</span></div></div>').join('');
-  return '<div class="fade-in"><button class="back-btn" data-action="back-level">← Chọn cấp độ khác</button><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge" style="background:'+d.color+'">HSK '+d.num+'</span> <span style="font-family:Noto Serif SC,serif">Từ vựng HSK '+d.num+'</span></div><p style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+d.all.length+' từ · '+sets.length+' mục · Mỗi mục 20 từ</p></div><div class="lesson-grid">'+grammarCard456+cards+'</div></div>';
+  return '<div class="fade-in"><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge" style="background:'+d.color+'">HSK '+d.num+'</span> <span style="font-family:Noto Serif SC,serif">Từ vựng HSK '+d.num+'</span></div><p style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+d.all.length+' từ · '+sets.length+' mục · Mỗi mục 20 từ</p></div><div class="lesson-grid">'+grammarCard456+cards+'</div></div>';
 }
 function renderHSK456Set(){
   const d=getHSK456Data();const sets=getHSK456Sets();
@@ -1297,14 +1194,14 @@ function renderHSK3Level(){
   if(typeof GRAMMAR_HSK3!=='undefined'){const gt=Object.values(GRAMMAR_HSK3).flat().length;grammarCard3='<div class="lesson-card" style="border:2px dashed #27AE60;background:linear-gradient(135deg,#F0FFF8,#E8FFF0)" data-action="open-grammar" data-glv="hsk3"><div class="lesson-num" style="color:#27AE60">📖 Ngữ pháp HSK 3</div><div class="lesson-title-cn" style="font-size:18px">'+gt+' điểm ngữ pháp</div><div class="lesson-title-vi">Lý thuyết + Ví dụ theo từng bài</div></div>'}
   let reviewCard3='<div class="lesson-card review-card hsk3" data-action="open-review3"><div class="lesson-num" style="color:var(--md-sys-color-secondary)">⭐ Tổng ôn từ vựng</div><div class="lesson-title-cn">500 từ HSK3</div><div class="lesson-title-vi">Flashcard · Trắc nghiệm · Điền từ</div><div class="lesson-meta"><span class="lesson-tag" style="background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-secondary-container)">500 từ</span></div></div>';
   let cards=HSK3.map(l=>'<div class="lesson-card hsk3" data-lesson="'+l.id+'" data-lv="hsk3"><div class="lesson-num" style="color:#27AE60">第'+l.id+'课 · Bài '+l.id+'</div><div class="lesson-title-cn">'+l.title+'</div><div class="lesson-title-vi">'+l.titleVi+'</div><div class="lesson-meta"><span class="lesson-tag" style="background:#EAFAF1;color:#27AE60">'+l.words.length+' từ</span></div></div>').join('');
-  return '<div class="fade-in"><button class="back-btn" data-action="back-level">← Chọn cấp độ khác</button><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge" style="background:var(--hsk3-accent)">HSK 3</span> <span style="font-family:Noto Serif SC,serif">新HSK教程 3</span></div><p style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+getTotal(HSK3)+' từ vựng · 18 bài học</p></div><div class="lesson-grid">'+reviewCard3+grammarCard3+cards+'</div></div>';
+  return '<div class="fade-in"><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge" style="background:var(--hsk3-accent)">HSK 3</span> <span style="font-family:Noto Serif SC,serif">新HSK教程 3</span></div><p style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+getTotal(HSK3)+' từ vựng · 18 bài học</p></div><div class="lesson-grid">'+reviewCard3+grammarCard3+cards+'</div></div>';
 }
 
 function renderHSK79Level(){
   const sets=getHSK79Sets();
   let cards=sets.map(s=>'<div class="lesson-card hsk79" data-hsk79set="'+s.id+'"><div class="lesson-num" style="color:#8E44AD">Mục '+s.id+'</div><div class="lesson-title-cn" style="font-size:17px">Từ '+s.start+' – '+s.end+'</div><div class="lesson-title-vi" style="font-size:12px">'+s.words.slice(0,5).map(w=>w.h).join(' · ')+'…</div><div class="lesson-meta"><span class="lesson-tag" style="background:#F4ECF7;color:#8E44AD">'+s.words.length+' từ</span></div></div>').join('');
   let grammarCard79='<div class="lesson-card" style="border:2px dashed #8E44AD;background:linear-gradient(135deg,#FAF5FF,#F3EAFF);cursor:pointer" data-action="open-grammarAdv" data-glv="hsk79"><div class="lesson-num" style="color:#8E44AD">📖 Ngữ pháp HSK 7-9</div><div class="lesson-title-cn" style="font-size:18px">'+GRAMMAR_HSK79G.length+' điểm ngữ pháp</div><div class="lesson-title-vi">Phân loại theo nhóm</div></div>';
-  return '<div class="fade-in"><button class="back-btn" data-action="back-level">← Chọn cấp độ khác</button><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge" style="background:var(--hsk79-accent)">HSK 7-9</span> <span style="font-family:Noto Serif SC,serif">Từ vựng nâng cao</span></div><p style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+HSK79_ALL.length+' từ · '+sets.length+' mục · Mỗi mục 20 từ</p></div><div class="lesson-grid">'+cards+'</div></div>';
+  return '<div class="fade-in"><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge" style="background:var(--hsk79-accent)">HSK 7-9</span> <span style="font-family:Noto Serif SC,serif">Từ vựng nâng cao</span></div><p style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+HSK79_ALL.length+' từ · '+sets.length+' mục · Mỗi mục 20 từ</p></div><div class="lesson-grid">'+cards+'</div></div>';
 }
 
 function renderHSK79Set(){
@@ -1569,23 +1466,17 @@ function renderDictionary(){
   if (state.dictSubtopic === 'grammar') {
     contentHtml = renderGrammarAllContent();
   } else {
-    // Lazy cached flat reference — tránh concat clone mảng mỗi lần render
-    if (!state._dictAllWordsCache) {
-      var aw = [];
-      if (typeof HSK1_ALL !== 'undefined') Array.prototype.push.apply(aw, HSK1_ALL);
-      if (typeof HSK2_ALL !== 'undefined') Array.prototype.push.apply(aw, HSK2_ALL);
-      if (typeof HSK3_ALL !== 'undefined') Array.prototype.push.apply(aw, HSK3_ALL);
-      state._dictAllWordsCache = aw;
-    }
-    var allWords = state._dictAllWordsCache;
+    var allWords = [];
+    if (typeof HSK1_ALL !== 'undefined') allWords = allWords.concat(HSK1_ALL);
+    if (typeof HSK2_ALL !== 'undefined') allWords = allWords.concat(HSK2_ALL);
+    if (typeof HSK3_ALL !== 'undefined') allWords = allWords.concat(HSK3_ALL);
     var search = (state.dictSearch || '').toLowerCase();
-    var filtered = allWords;
     if (search) {
-      filtered = allWords.filter(function(w){
+      allWords = allWords.filter(function(w){
         return (w.hanzi||'').indexOf(search)>=0 || (w.pinyin||'').toLowerCase().indexOf(search)>=0 || (w.vi||'').toLowerCase().indexOf(search)>=0 || (w.hv||'').toLowerCase().indexOf(search)>=0;
       });
     }
-    var display = filtered.slice(0, 100);
+    var display = allWords.slice(0, 100);
     var items = display.map(function(w){
       return '<div class="word-item">'+
         '<div class="word-hanzi">'+(w.hanzi||w.h||'')+'</div>'+
@@ -1600,7 +1491,7 @@ function renderDictionary(){
     contentHtml = '<input class="dict-search" type="text" placeholder="Tìm từ, pinyin, nghĩa..." value="'+(state.dictSearch||'')+'" data-dict-search>'+
       (state.dictSearch && display.length===0 ? '<div class="placeholder-box">Không tìm thấy từ nào khớp với "'+state.dictSearch+'"</div>' : '')+
       '<div class="word-list">'+items+'</div>'+
-      (filtered.length > 100 ? '<div class="placeholder-box" style="margin-top:12px">Hiển thị 100/'+filtered.length+' từ. Nhập từ khóa để thu hẹp.</div>' : '');
+      (allWords.length > 100 ? '<div class="placeholder-box" style="margin-top:12px">Hiển thị 100/'+allWords.length+' từ. Nhập từ khóa để thu hẹp.</div>' : '');
   }
 
   return '<div class="fade-in">'+
@@ -1645,85 +1536,16 @@ function renderGrammarAllContent(){
 }
 
 function renderProfile(){
-  var totalWords = 0;
-  if (typeof HSK1_ALL !== 'undefined') totalWords += HSK1_ALL.length;
-  if (typeof HSK2_ALL !== 'undefined') totalWords += HSK2_ALL.length;
-  if (typeof HSK3_ALL !== 'undefined') totalWords += HSK3_ALL.length;
-
-  return '<div class="fade-in">'+
-    '<div class="profile-header">'+
-      '<div class="profile-avatar">学</div>'+
-      '<div class="profile-name">Người học</div>'+
-      '<div class="profile-streak">🔥 0 ngày liên tiếp</div>'+
-    '</div>'+
-    '<div class="profile-stats-grid">'+
-      '<div class="profile-stat-card"><div class="profile-stat-num">'+totalWords+'</div><div class="profile-stat-label">Từ vựng trong CSDL</div></div>'+
-      '<div class="profile-stat-card"><div class="profile-stat-num">0</div><div class="profile-stat-label">Từ đã thuộc</div></div>'+
-      '<div class="profile-stat-card"><div class="profile-stat-num">0</div><div class="profile-stat-label">Bài đã hoàn thành</div></div>'+
-      '<div class="profile-stat-card"><div class="profile-stat-num">—</div><div class="profile-stat-label">Thời gian học</div></div>'+
-    '</div>'+
-    '<div class="placeholder-box"><span class="placeholder-box-icon">🏆</span> Bảng thành tích & Huy hiệu sẽ xuất hiện ở đây<br><span style="font-size:11px">[Gamification Placeholder]</span></div>'+
-    '<div class="placeholder-box"><span class="placeholder-box-icon">⚙️</span> Cài đặt ứng dụng</div>'+
-  '</div>';
+  if(!state.isLoggedIn) return '<div class="fade-in" style="padding:32px;text-align:center"><h2>Đăng nhập để xem hồ sơ</h2><button class="btn-google" data-action="login" style="margin:16px auto"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg><span>Đăng nhập với Google</span></button></div>';
+  var u=state.user;var m=u.user_metadata;
+  var totalWords=0;
+  if(typeof HSK1_ALL!=='undefined')totalWords+=HSK1_ALL.length;
+  if(typeof HSK2_ALL!=='undefined')totalWords+=HSK2_ALL.length;
+  if(typeof HSK3_ALL!=='undefined')totalWords+=HSK3_ALL.length;
+  return '<div class="fade-in" style="padding:24px"><div style="text-align:center;margin-bottom:24px"><img src="'+m.avatar_url+'" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--c-primary)"><h2 style="margin:12px 0 4px">'+m.full_name+'</h2><p style="color:var(--c-text-secondary)">'+u.email+'</p></div><div class="profile-stats-grid"><div class="profile-stat-card"><div class="profile-stat-num">'+totalWords+'</div><div class="profile-stat-label">Từ vựng trong CSDL</div></div><div class="profile-stat-card"><div class="profile-stat-num">0</div><div class="profile-stat-label">Từ đã thuộc</div></div><div class="profile-stat-card"><div class="profile-stat-num">0</div><div class="profile-stat-label">Bài đã hoàn thành</div></div></div><div class="profile-menu"><div class="profile-menu-item">📊 Tiến độ học tập</div><div class="profile-menu-item">⭐ Gói Premium</div><div class="profile-menu-item">⚙️ Cài đặt</div><div class="profile-menu-item" data-action="logout" style="color:var(--c-error);cursor:pointer">🚪 Đăng xuất</div></div></div>';
 }
 
 function attachEvents(){
-  // Header nav
-  document.querySelectorAll('[data-header-nav]').forEach(function(b){
-    b.onclick=function(){
-      var nav = b.dataset.headerNav;
-      if (nav === 'home') { state.tab='learn'; state.view='home'; }
-      else if (nav === 'hsk') { state.tab='learn'; state.view='home'; }
-      else if (nav === 'review') { state.tab='review'; state._reviewMode=null; state.quizQuestions=[]; }
-      else if (nav === 'dict') { state.tab='dict'; state.dictSubtopic='words'; state.dictSearch=''; state._dictCursorStart=undefined; }
-      state.showUserMenu = false; state.showMobileMenu = false;
-      render();
-    };
-  });
-  // Sidebar nav buttons
-  document.querySelectorAll('[data-sidebar-nav]').forEach(function(b){
-    b.onclick=function(){
-      // The sidebar items have their actions defined inline via data attributes
-      // We handle them through the existing nav/data-action dispatch
-      var id = b.dataset.sidebarNav;
-      if (id === 'learn-home') { state.tab='learn'; state.view='home'; }
-      else if (id === 'learn-hsk1') { state.tab='learn'; state.view='level'; state.level='hsk1'; }
-      else if (id === 'learn-hsk2') { state.tab='learn'; state.view='level'; state.level='hsk2'; }
-      else if (id === 'learn-hsk3') { state.tab='learn'; state.view='level'; state.level='hsk3'; }
-      else if (id === 'learn-hsk4') { state.tab='learn'; state.view='level'; state.level='hsk4'; }
-      else if (id === 'learn-hsk5') { state.tab='learn'; state.view='level'; state.level='hsk5'; }
-      else if (id === 'learn-hsk6') { state.tab='learn'; state.view='level'; state.level='hsk6'; }
-      else if (id === 'learn-hsk79') { state.tab='learn'; state.view='level'; state.level='hsk79'; }
-      else if (id === 'review-srs') { state.tab='review'; state._reviewMode=null; state.quizQuestions=[]; }
-      else if (id === 'dict-words') { state.tab='dict'; state.dictSubtopic='words'; state.dictSearch=''; state._dictCursorStart=undefined; }
-      else if (id === 'dict-grammar') { state.tab='dict'; state.dictSubtopic='grammar'; }
-      else if (id === 'profile') { state.tab='profile'; }
-      render();
-    };
-  });
-  // User menu & auth
-  document.querySelectorAll('[data-action="toggle-user-menu"]').forEach(function(b){ b.onclick=function(e){ e.stopPropagation(); state.showUserMenu=!state.showUserMenu; render(); }; });
-  document.querySelectorAll('[data-action="close-user-menu"]').forEach(function(b){ b.onclick=function(){ state.showUserMenu=false; render(); }; });
-  document.querySelectorAll('[data-action="go-profile"]').forEach(function(b){ b.onclick=function(){ state.tab='profile'; state.showUserMenu=false; render(); }; });
-  document.querySelectorAll('[data-action="go-review"]').forEach(function(b){ b.onclick=function(){ state.tab='review'; state._reviewMode=null; state.quizQuestions=[]; state.showUserMenu=false; render(); }; });
-  document.querySelectorAll('[data-action="go-dict"]').forEach(function(b){ b.onclick=function(){ state.tab='dict'; state.dictSubtopic='words'; state.showUserMenu=false; render(); }; });
-  document.querySelectorAll('[data-action="logout"]').forEach(function(b){ b.onclick=function(){ state.isLoggedIn=false; state.showUserMenu=false; render(); }; });
-  document.querySelectorAll('[data-action="login"]').forEach(function(b){ b.onclick=function(){ state.isLoggedIn=true; render(); }; });
-  document.querySelectorAll('[data-action="toggle-mobile-menu"]').forEach(function(b){ b.onclick=function(e){ e.stopPropagation(); state.showMobileMenu=!state.showMobileMenu; render(); }; });
-  // Mobile menu nav items
-  document.querySelectorAll('[data-mobile-nav]').forEach(function(b){
-    b.onclick=function(){
-      var a = b.dataset.mobileNav;
-      if (a==='home') { state.tab='learn'; state.view='home'; }
-      else if (a==='hsk') { state.tab='learn'; state.view='home'; }
-      else if (a==='review') { state.tab='review'; state._reviewMode=null; state.quizQuestions=[]; }
-      else if (a==='dict') { state.tab='dict'; state.dictSubtopic='words'; state.dictSearch=''; state._dictCursorStart=undefined; }
-      else if (a==='profile') { state.tab='profile'; }
-      else if (a==='grammar') { state.tab='dict'; state.dictSubtopic='grammar'; }
-      state.showMobileMenu = false;
-      render();
-    };
-  });
   // Bottom nav tabs
   document.querySelectorAll('[data-tab]').forEach(function(b){
     b.onclick=function(){
@@ -1735,18 +1557,7 @@ function attachEvents(){
   });
   // Dictionary search
   var ds=document.querySelector('[data-dict-search]');
-  if(ds){
-    ds.oninput=function(){
-      state.dictSearch=this.value;
-      state._dictCursorStart=this.selectionStart;
-      state._dictCursorEnd=this.selectionEnd;
-      render();
-    };
-    if (state._dictCursorStart !== undefined) {
-      ds.focus();
-      ds.setSelectionRange(state._dictCursorStart, state._dictCursorEnd || state._dictCursorStart);
-    }
-  }
+  if(ds){ds.oninput=function(){state.dictSearch=this.value;render()};ds.focus()}
   // Dictionary subtabs
   document.querySelectorAll('[data-dict-sub]').forEach(function(b){
     b.onclick=function(){state.dictSubtopic=b.dataset.dictSub;render()};
@@ -1814,7 +1625,13 @@ function attachEvents(){
   document.querySelectorAll('[data-action="quiz-restart-lesson"]').forEach(function(b){
     b.onclick=function(){state.quizQuestions=[];state.quizDone=false;render()};
   });
-  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;if(a==='back'){state.view='level';render()}if(a==='back-level'){state.view='home';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words);state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
+  // ═══ AUTH HANDLERS ═══
+  document.querySelectorAll('[data-action="login"]').forEach(b=>{b.onclick=async(e)=>{e.stopPropagation();await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});}});
+  document.querySelectorAll('[data-action="logout"]').forEach(b=>{b.onclick=async(e)=>{e.stopPropagation();await sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();}});
+  document.querySelectorAll('[data-action="toggle-user-menu"]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();state.showUserMenu=!state.showUserMenu;render();}});
+  document.querySelectorAll('[data-action="profile"]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();state.tab='profile';state.showUserMenu=false;render();}});
+  // ═══ GENERIC HANDLER (must be AFTER specific handlers) ═══
+  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;if(a==='back'){state.view='level';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words);state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
   document.querySelectorAll('[data-mode]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.mode;if(state.mode==='flashcard')state.fcShuffled=[];if(state.mode==='quiz')state.quizQuestions=[];render()}});
   document.querySelectorAll('[data-hsk79set]').forEach(c=>{c.onclick=()=>{state.view='hsk79set';state.lessonId=parseInt(c.dataset.hsk79set);state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
   document.querySelectorAll('[data-m79]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.m79;state.fcShuffled=[];state.quizQuestions=[];render()}});
@@ -1910,5 +1727,9 @@ document.addEventListener('keydown',function(e){
   }
 });
 render();
+// ═══ Supabase Auth: check session on load ═══
+sb.auth.onAuthStateChange((event,session)=>{if(session?.user){state.isLoggedIn=true;state.user=session.user;render()}});
+// Check existing session
+sb.auth.getSession().then(({data})=>{if(data.session){state.isLoggedIn=true;state.user=data.session.user;render()}});
 </script>
 <script type="module" src="/src/main.js"></script></body></html>
