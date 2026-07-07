@@ -813,18 +813,19 @@ body {
 
 .level-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
 }
 .level-card {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--radius-md);
-  padding: 18px 16px;
+  padding: 18px 14px;
   cursor: pointer;
   transition: border-color .15s, box-shadow .15s, transform .12s;
-  position: relative;
-  overflow: hidden;
+  position: relative; overflow: hidden;
+  aspect-ratio: 1;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
 }
 .level-card:hover {
   border-color: var(--c-border-strong);
@@ -856,6 +857,11 @@ body {
   color: var(--c-text-dim);
   display: flex; gap: 8px;
 }
+.level-card-title { font-size: 17px; font-weight: 700; color: var(--c-text); font-family: var(--font-sans); }
+.level-card-desc { font-size: 12px; color: var(--c-text-dim); margin-top: 4px; line-height: 1.4; }
+.level-card-wordcount { font-size: 12px; color: var(--c-text-dim); }
+.level-card-arrow { margin-top: 8px; font-size: 12px; color: var(--c-text-dim); }
+.level-card-top { display: flex; align-items: center; gap: 8px; width: 100%; }
 
 /* ── Lesson grid (level views) ─────────── */
 .lesson-grid {
