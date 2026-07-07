@@ -1510,9 +1510,10 @@ function generateSRQuiz(words,mode){
 }
 
 function renderSRSDashboard(){
-  // If actively reviewing, show flashcard or quiz
-  if(state._reviewMode==='flashcard'&&state.fcShuffled.length)return renderFCOnePage();
-  if(state._reviewMode&&state.quizQuestions.length){return state._reviewMode==='fillin'?renderFillInSRS():renderQuizSRS()}
+  // If actively reviewing, show flashcard or quiz ABOVE the selector
+  var reviewContent='';
+  if(state._reviewMode==='flashcard'&&state.fcShuffled.length)reviewContent=renderFCOnePage();
+  else if(state._reviewMode&&state.quizQuestions.length)reviewContent=state._reviewMode==='fillin'?renderFillInSRS():renderQuizSRS();
 
   var levels=[{id:'hsk1',label:'HSK 1',words:typeof HSK1_ALL!=='undefined'?HSK1_ALL.length:0,locked:isLevelLocked('hsk1')},{id:'hsk2',label:'HSK 2',words:typeof HSK2_ALL!=='undefined'?HSK2_ALL.length:0,locked:isLevelLocked('hsk2')},{id:'hsk3',label:'HSK 3',words:typeof HSK3_ALL!=='undefined'?HSK3_ALL.length:0,locked:isLevelLocked('hsk3')}];
   var modes=[{id:'flashcard',icon:icon('columns-2',16),label:'Lật thẻ'},{id:'meaning',icon:icon('pencil',16),label:'Chọn nghĩa'},{id:'word',icon:icon('shuffle',16),label:'Chọn từ'},{id:'fillin',icon:icon('file-text',16),label:'Điền từ'}];
@@ -1528,13 +1529,10 @@ function renderSRSDashboard(){
     return '<button class="review-mode-btn '+active+'" data-review-mode="'+m.id+'">'+m.icon+m.label+'</button>';
   }).join('');
 
-  return '<div class="fade-in">'+
-    '<div class="section-title"><span class="section-icon">'+icon('rotate-cw',18)+'</span> Ôn tập</div>'+
-    '<div class="review-lv-row">'+lvHtml+'</div>'+
-    '<div class="review-mode-row">'+modeHtml+'</div>'+
-    (state._reviewLevel&&state._reviewMode?'<button class="review-start-btn" data-action="review-start">'+icon('zap',16)+' Bắt đầu ôn tập</button>':'<p style="text-align:center;color:var(--c-text-dim)">Chọn cấp độ và chế độ ôn tập</p>')+
-    '<div class="placeholder-box"><span class="placeholder-box-icon">📊</span> Hệ thống sẽ chọn bài tập phù hợp và ngẫu nhiên hóa dạng câu hỏi để tránh học vẹt.</div>'+
-  '</div>';
+  return '<div class="fade-in">'+reviewContent+
+    '<div class="review-bar"><div class="review-lv-row">'+lvHtml+'</div><div class="review-mode-row">'+modeHtml+'</div>'+
+    (state._reviewLevel&&state._reviewMode?'<button class="review-start-btn" data-action="review-start">'+icon('zap',16)+' Bắt đầu ôn tập mới</button>':'<p style="text-align:center;color:var(--c-text-dim)">Chọn cấp độ và chế độ ôn tập</p>')+
+    '</div></div>';
 }
 
 function renderQuizSRS(){
@@ -1733,7 +1731,16 @@ function attachEvents(){
     b.onclick=function(){state._reviewLevel=b.dataset.reviewLv;render()};
   });
   document.querySelectorAll('[data-review-mode]').forEach(function(b){
-    b.onclick=function(){state._reviewMode=b.dataset.reviewMode;render()};
+    b.onclick=function(){
+      state._reviewMode=b.dataset.reviewMode;
+      // If we have words loaded, switch mode immediately
+      if(state.fcShuffled.length&&state._reviewMode!=='flashcard'){
+        generateSRQuiz(state.fcShuffled,state._reviewMode);
+      }else if(state._reviewMode==='flashcard'&&state.fcShuffled.length){
+        state.quizQuestions=[];
+      }
+      render();
+    };
   });
   // Review start
   document.querySelectorAll('[data-action="review-start"]').forEach(function(b){
