@@ -397,9 +397,17 @@ function getAllWords(){return[...HSK1,...HSK2,...HSK3].flatMap(l=>l.words)}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function getTotal(arr){return arr.reduce((s,l)=>s+l.words.length,0)}
 
+function renderFooter(){
+  return '<footer class="footer"><div class="footer-grid"><div class="footer-col"><h4>SubHSK Chinese</h4><p>Nền tảng học tiếng Trung hiện đại với đầy đủ giáo trình HSK 3.0.</p></div><div class="footer-col"><h4>Liên kết</h4><a href="#">Trang chủ</a><a href="#">Ôn tập</a><a href="#">Từ điển</a><a href="#">Ngữ pháp</a></div><div class="footer-col"><h4>Hỗ trợ</h4><a href="#">Trung tâm trợ giúp</a><a href="#">Liên hệ</a><a href="#">Điều khoản</a><a href="#">Bảo mật</a></div><div class="footer-col"><h4>Tải App</h4><div class="footer-qr">📱<br><small>Quét QR để tải</small></div></div></div><div class="footer-bottom"><p>© 2026 SubHSK Chinese. All rights reserved.</p><div class="footer-social">'+icon('message-square',16)+icon('star',16)+icon('send',16)+'</div></div></footer>';
+}
+
+function renderFloatingTools(){
+  return '<div class="floating-tools"><button class="float-btn" title="Ôn tập nhanh" data-action="quick-review">'+icon('rotate-cw',18)+'</button><button class="float-btn" title="Sổ tay ngữ pháp" data-action="grammar-handbook">'+icon('book-open',18)+'</button><button class="float-btn" title="Liên hệ" data-action="contact">'+icon('message-square',18)+'</button><button class="float-btn" title="Lên đầu trang" data-action="scroll-top">'+icon('arrow-left',18)+'</button></div>';
+}
+
 function render(){
   const app=document.getElementById('app');
-  app.innerHTML=renderHeader()+renderMainContent()+renderBottomNav();
+  app.innerHTML=renderHeader()+renderMainContent()+renderFloatingTools()+renderFooter()+renderBottomNav();
   attachEvents();
 }
 
@@ -477,15 +485,34 @@ function renderHome(){
 }
 
 function renderHomeHero(){
-  return '<div class="home-hero fade-in">' +
-    '<div class="hero-greeting">你好! 👋</div>' +
-    '<h1>Học tiếng Trung<br>mỗi ngày cùng Meiday</h1>' +
-    '<p>Ôn tập từ vựng HSK 3.0 theo giáo trình chính thức. Lật thẻ, làm quiz, luyện viết — tất cả trong một ứng dụng.</p>' +
-    '<div class="stats-row">' +
-      '<div class="stat"><div class="stat-num">7</div><div class="stat-label">Cấp độ</div></div>' +
-      '<div class="stat"><div class="stat-num">11000</div><div class="stat-label">Từ vựng</div></div>' +
-      '<div class="stat"><div class="stat-num">5</div><div class="stat-label">Chế độ ôn</div></div>' +
-    '</div></div>';
+  // Calculate some stats
+  var totalWords = 11000;
+  var streakDays = 0;
+  if(state.isLoggedIn) streakDays = parseInt(localStorage.getItem('subhsk_streak')||'0');
+
+  return '<div class="home-hero fade-in">'+
+    '<div class="hero-left">'+
+      '<div class="hero-greeting">你好! 👋</div>'+
+      '<h1>Học tiếng Trung<br>mỗi ngày cùng SubHSK</h1>'+
+      '<p>Ôn tập từ vựng HSK 3.0 theo giáo trình chính thức. Lật thẻ, làm quiz, luyện viết — tất cả trong một ứng dụng.</p>'+
+      '<button class="hero-btn" data-action="start-learning">'+icon('graduation-cap',18)+' Học ngay</button>'+
+    '</div>'+
+    '<div class="hero-right">'+
+      '<div class="hero-card">'+
+        '<div class="hero-card-hanzi">你</div>'+
+        '<div class="hero-card-info"><div class="hero-card-pinyin">nǐ</div><div class="hero-card-meaning">bạn, mày (đại từ nhân xưng ngôi thứ 2)</div></div>'+
+      '</div>'+
+      '<div class="hero-card">'+
+        '<div class="hero-card-hanzi">学</div>'+
+        '<div class="hero-card-info"><div class="hero-card-pinyin">xué</div><div class="hero-card-meaning">học (động từ)</div></div>'+
+      '</div>'+
+      '<div class="hero-card">'+
+        '<div class="hero-card-hanzi">好</div>'+
+        '<div class="hero-card-info"><div class="hero-card-pinyin">hǎo</div><div class="hero-card-meaning">tốt, ngon, hay (tính từ)</div></div>'+
+      '</div>'+
+      (state.isLoggedIn?'<div class="hero-streak">'+icon('zap',16)+' '+streakDays+' ngày học liên tiếp</div>':'')+
+    '</div>'+
+  '</div>';
 }
 
 function renderHomeLevelCards(){
