@@ -2656,6 +2656,17 @@ body {
 }
 .rv-restart-btn:hover { transform: translateY(-2px); }
 
+/* Close button for in-session review */
+.rv-close-btn {
+  position: absolute; top: 8px; right: 8px;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,.05); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--c-text-muted); transition: all .15s; z-index: 10;
+}
+.rv-close-btn:hover { background: rgba(0,0,0,.1); color: var(--c-text); }
+.quiz-container, .fc-one-page { position: relative; }
+
 /* Dictionary groups */
 .dict-group { margin-bottom: 4px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--c-border); }
 .dict-group.locked { opacity: .6; }
