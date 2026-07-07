@@ -455,12 +455,7 @@ function renderMainContent(){
       content=state.view==='home'?renderHome():state.view==='level'?renderLevel():state.view==='hsk79set'?renderHSK79Set():state.view==='hsk456set'?renderHSK456Set():state.view==='grammarAdv'?renderGrammarAdv():state.view==='grammar'?renderGrammar():state.view==='grammarAll'?renderGrammarAll():state.view==='review'?renderReview():state.view==='review2'?renderReview2():state.view==='review3'?renderReview3():renderLesson();
       break;
     case 'review':
-      if (state._reviewMode && state.quizQuestions.length) {
-        if (state._reviewMode === 'fillin') content = renderFillInSRS();
-        else content = renderQuizSRS();
-      } else {
-        content = renderSRSDashboard();
-      }
+      content = renderSRSDashboard();
       break;
     case 'dict':
       content=renderDictionary();
