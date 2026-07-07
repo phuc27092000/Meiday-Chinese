@@ -1405,8 +1405,17 @@ function renderWordList(lesson){
   return '<div class="word-list">'+items+'</div>';
 }
 
+// Enrich lesson words with hv + ex from _ALL arrays
+function enrichWord(w){
+  if(w.hv&&w.ex)return w;
+  var pool=(typeof HSK1_ALL!=='undefined'?HSK1_ALL:[]).concat(typeof HSK2_ALL!=='undefined'?HSK2_ALL:[]).concat(typeof HSK3_ALL!=='undefined'?HSK3_ALL:[]);
+  var found=pool.find(function(x){return x.hanzi===w.hanzi||x.h===w.hanzi});
+  if(found){w.hv=found.hv||'';w.ex=found.ex||''}
+  return w;
+}
+
 function renderFlashcard(lesson){
-  if(!state.fcShuffled.length){state.fcShuffled=shuffle(lesson.words);state.fcIndex=0;state.fcFlipped=false}
+  if(!state.fcShuffled.length){state.fcShuffled=shuffle(lesson.words.map(enrichWord));state.fcIndex=0;state.fcFlipped=false}
   return renderFCOnePage();
 }
 
