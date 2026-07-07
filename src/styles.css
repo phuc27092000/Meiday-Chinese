@@ -2400,3 +2400,16 @@ body {
 .level-card.locked { cursor: default; filter: grayscale(0.3); }
 .level-card.locked:hover { transform: none; box-shadow: var(--shadow-sm); }
 .level-card-lock { font-size: 12px; color: #94A3B8; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+
+/* Header buttons */
+.header-btn {
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; border-radius: 50%; cursor: pointer;
+  color: var(--c-text-muted); transition: all .15s;
+}
+.header-btn:hover { background: var(--c-bg); color: var(--c-text); }
+.header-subtitle { font-size: 12px; color: var(--c-text-muted); font-weight: 400; display: none; }
+@media (min-width: 600px) { .header-subtitle { display: inline; } }
+
+/* Section subtitle */
+.section-subtitle { font-size: 13px; color: var(--c-text-dim); margin: -8px 0 16px 0; }
