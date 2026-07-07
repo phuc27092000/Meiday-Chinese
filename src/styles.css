@@ -2724,3 +2724,13 @@ body {
   .floating-tools { bottom: 70px; right: 12px; }
   .float-btn { width: 38px; height: 38px; }
 }
+
+/* Writing input - single line */
+.writing-textarea {
+  width: 100%; padding: 10px 14px; border: 1px solid var(--c-border);
+  border-radius: 8px; font-family: var(--font-cn); font-size: 18px;
+  outline: none; transition: border-color .2s; box-sizing: border-box;
+}
+.writing-textarea:focus { border-color: var(--c-primary); }
+.writing-error-list { margin: 6px 0 0; padding: 0 0 0 18px; font-size: 13px; color: var(--c-error); }
+.writing-error-list li { margin-bottom: 4px; }

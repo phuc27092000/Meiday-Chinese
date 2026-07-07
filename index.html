@@ -636,11 +636,11 @@ function renderWriting(data, levelKey){
     return '<div class="writing-sentence-block">' +
       '<div class="writing-sentence-header">' +
         '<span class="writing-sentence-num">' + (i+1) + '</span>' +
-        '<span class="writing-sentence-vi"><span class="writing-vi-tag">VI</span> ' + d.vi + '</span>' +
+        '<span class="writing-sentence-vi">' + d.vi + '</span>' +
       '</div>' +
       (hasFeedback
-        ? '<div class="writing-colored-input">' + renderColoredSegments(segs) + '</div>'
-        : '<textarea class="writing-textarea" data-writing-input="' + i + '" placeholder="Nhập câu tiếng Trung..." rows="2">' + (userText || '') + '</textarea>'
+        ? '<div class="writing-colored-input">' + renderColoredSegments(segs) + '<div class="writing-errors">' + renderWritingErrors(segs) + '</div></div>'
+        : '<input type="text" class="writing-textarea" data-writing-input="' + i + '" placeholder="Nhập câu tiếng Trung..." value="' + (userText||'').replace(/"/g,'&quot;') + '">'
       ) +
     '</div>';
   }).join('');
@@ -673,17 +673,17 @@ function renderWriting(data, levelKey){
 
 function renderColoredSegments(segs) {
   if (!segs || !segs.segments) return '';
-  let html = '';
-  segs.segments.forEach((sg, i) => {
-    if (sg.correct) {
-      html += '<span class="seg-correct">' + sg.text + '</span>';
-    } else {
-      const tipId = 'seg-tip-' + segs.step + '-' + i;
-      const tipText = (sg.reason || 'Sai') + (sg.fix ? ' → Đúng: ' + sg.fix : '');
-      html += '<span class="seg-wrong" data-seg-tip="' + tipId + '" onclick="event.stopPropagation();var el=document.getElementById(\'' + tipId + '\');var all=document.querySelectorAll(\'.seg-tip-popover\');all.forEach(function(p){if(p!==el)p.style.display=\'none\'});el.style.display=el.style.display===\'block\'?\'none\':\'block\'">' + sg.text + '<span class="seg-tip-popover" id="' + tipId + '">' + tipText + '</span></span>';
-    }
-  });
-  return html;
+  return segs.segments.map(function(sg){
+    return sg.correct ? '<span class="seg-correct">'+sg.text+'</span>' : '<span class="seg-wrong">'+sg.text+'</span>';
+  }).join('');
+}
+function renderWritingErrors(segs){
+  if (!segs || !segs.segments) return '';
+  var errs = segs.segments.filter(function(s){return !s.correct});
+  if (!errs.length) return '';
+  return '<ul class="writing-error-list">'+errs.map(function(e){
+    return '<li>'+(e.reason||'Sai')+(e.fix?' → <strong>'+e.fix+'</strong>':'')+'</li>';
+  }).join('')+'</ul>';
 }
 
 function renderWritingSetup() {
