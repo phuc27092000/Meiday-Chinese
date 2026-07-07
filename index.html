@@ -491,32 +491,29 @@ function renderHome(){
 }
 
 function renderHomeHero(){
-  // Calculate some stats
-  var totalWords = 11000;
-  var streakDays = 0;
-  if(state.isLoggedIn) streakDays = parseInt(localStorage.getItem('subhsk_streak')||'0');
-
+  var streakDays = state.isLoggedIn ? parseInt(localStorage.getItem('subhsk_streak')||'0') : 0;
   return '<div class="home-hero fade-in">'+
     '<div class="hero-left">'+
       '<div class="hero-greeting">你好! 👋</div>'+
-      '<h1>Học tiếng Trung<br>mỗi ngày cùng SubHSK</h1>'+
-      '<p>Ôn tập từ vựng HSK 3.0 theo giáo trình chính thức. Lật thẻ, làm quiz, luyện viết — tất cả trong một ứng dụng.</p>'+
-      '<button class="hero-btn" data-action="start-learning">'+icon('graduation-cap',18)+' Học ngay</button>'+
+      '<h1 class="hero-title">Học tiếng Trung<br>mỗi ngày cùng <span>SubHSK</span></h1>'+
+      '<p class="hero-desc">Ôn tập từ vựng HSK 3.0 theo giáo trình chính thức. Lật thẻ, làm quiz, luyện viết — tất cả trong một ứng dụng.</p>'+
+      '<div class="hero-actions">'+
+        '<button class="hero-btn-primary" data-action="start-learning">'+icon('graduation-cap',18)+' Học ngay</button>'+
+        '<button class="hero-btn-outline" data-action="go-review-hero">'+icon('rotate-cw',18)+' Ôn tập ngay</button>'+
+      '</div>'+
     '</div>'+
     '<div class="hero-right">'+
-      '<div class="hero-card">'+
-        '<div class="hero-card-hanzi">你</div>'+
-        '<div class="hero-card-info"><div class="hero-card-pinyin">nǐ</div><div class="hero-card-meaning">bạn, mày (đại từ nhân xưng ngôi thứ 2)</div></div>'+
+      '<div class="hero-vocab-card">'+
+        '<div class="hero-vocab-char">你</div>'+
+        '<div class="hero-vocab-pinyin">nǐ</div>'+
+        '<div class="hero-vocab-meaning">bạn, mày (đại từ nhân xưng ngôi thứ 2)</div>'+
+        '<div class="hero-vocab-wave"><span></span><span></span><span></span><span></span><span></span></div>'+
       '</div>'+
-      '<div class="hero-card">'+
-        '<div class="hero-card-hanzi">学</div>'+
-        '<div class="hero-card-info"><div class="hero-card-pinyin">xué</div><div class="hero-card-meaning">học (động từ)</div></div>'+
+      '<div class="hero-progress-card">'+
+        '<div class="hero-prog-item"><span class="hero-prog-icon">🔥</span><strong>'+streakDays+'</strong> ngày liên tiếp</div>'+
+        '<div class="hero-prog-bar"><div class="hero-prog-fill" style="width:10%"></div></div>'+
+        '<div class="hero-prog-label">HSK 1 — Đã học 10%</div>'+
       '</div>'+
-      '<div class="hero-card">'+
-        '<div class="hero-card-hanzi">好</div>'+
-        '<div class="hero-card-info"><div class="hero-card-pinyin">hǎo</div><div class="hero-card-meaning">tốt, ngon, hay (tính từ)</div></div>'+
-      '</div>'+
-      (state.isLoggedIn?'<div class="hero-streak">'+icon('zap',16)+' '+streakDays+' ngày học liên tiếp</div>':'')+
     '</div>'+
   '</div>';
 }
@@ -1758,7 +1755,7 @@ function attachEvents(){
     b.onclick=function(e){e.stopPropagation();state.tab='review';state._reviewLevel=state.level;state._reviewMode='flashcard';render();window.scrollTo({top:0})};
   });
   // ═══ GENERIC HANDLER (all data-action, including auth) ═══
-  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;if(a==='login'){sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});return}if(a==='logout'){sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();return}if(a==='toggle-user-menu'){state.showUserMenu=!state.showUserMenu;render();return}if(a==='profile'){state.tab='profile';state.showUserMenu=false;render();return}if(a==='back'){state.view='level';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words);state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
+  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;if(a==='login'){sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});return}if(a==='logout'){sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();return}if(a==='toggle-user-menu'){state.showUserMenu=!state.showUserMenu;render();return}if(a==='profile'){state.tab='profile';state.showUserMenu=false;render();return}if(a==='go-review'){state.tab='review';state._reviewLevel=state.level;state._reviewMode='flashcard';render();window.scrollTo({top:0});return}if(a==='go-review-hero'){state.tab='review';state._reviewLevel='hsk1';state._reviewMode='flashcard';if(typeof HSK1_ALL!=='undefined'){state.fcShuffled=shuffle(HSK1_ALL.map(enrichWord)).slice(0,30);state.fcIndex=0;state.fcFlipped=false}render();window.scrollTo({top:0});return}if(a==='back'){state.view='level';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words.map(enrichWord));state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
   document.querySelectorAll('[data-mode]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.mode;if(state.mode==='flashcard')state.fcShuffled=[];if(state.mode==='quiz')state.quizQuestions=[];render()}});
   document.querySelectorAll('[data-hsk79set]').forEach(c=>{c.onclick=()=>{state.view='hsk79set';state.lessonId=parseInt(c.dataset.hsk79set);state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
   document.querySelectorAll('[data-m79]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.m79;state.fcShuffled=[];state.quizQuestions=[];render()}});
