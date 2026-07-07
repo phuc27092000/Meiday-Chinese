@@ -385,7 +385,7 @@ function generateLocalWritingData(subMode) {
 const SUPABASE_URL='https://gpmwzeurcwfiyxlomqsa.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbXd6ZXVyY3dmaXl4bG9tcXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTMwNzIsImV4cCI6MjA5ODAyOTA3Mn0.0G7W1OY6rqPDmzcPpGhNaUiDl6k9K0ijsME-dQjRujk';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'list',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,isVIP:false,showUserMenu:false,showMobileMenu:false,_reviewLevel:null,_reviewMode:null};
+let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'list',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,isVIP:false,showUserMenu:false,showMobileMenu:false,_reviewLevel:null,_reviewMode:null,_dictExpanded:null};
 
 // ═══ LOCK SYSTEM: Guest→HSK1, Free→HSK1-2, VIP→ALL ═══
 function getMaxUnlockedLevel(){if(!state.isLoggedIn)return 1;if(!state.isVIP)return 2;return 9;}
@@ -1548,41 +1548,34 @@ function renderFillInSRS(){
 }
 
 function renderDictionary(){
-  var subtopics = [
-    {id:'words',label:'Từ vựng'},
-    {id:'grammar',label:'Ngữ pháp'},
+  var search=(state.dictSearch||'').toLowerCase();
+  var groups=[
+    {id:'hsk1',label:'HSK 1',data:typeof HSK1_ALL!=='undefined'?HSK1_ALL:[],locked:isLevelLocked('hsk1')},
+    {id:'hsk2',label:'HSK 2',data:typeof HSK2_ALL!=='undefined'?HSK2_ALL:[],locked:isLevelLocked('hsk2')},
+    {id:'hsk3',label:'HSK 3',data:typeof HSK3_ALL!=='undefined'?HSK3_ALL:[],locked:isLevelLocked('hsk3')},
+    {id:'hsk4',label:'HSK 4',data:typeof HSK4_ALL!=='undefined'?HSK4_ALL:[],locked:isLevelLocked('hsk4')},
+    {id:'hsk5',label:'HSK 5',data:typeof HSK5_ALL!=='undefined'?HSK5_ALL:[],locked:isLevelLocked('hsk5')},
+    {id:'hsk6',label:'HSK 6',data:typeof HSK6_ALL!=='undefined'?HSK6_ALL:[],locked:isLevelLocked('hsk6')},
   ];
-  var subHtml = subtopics.map(function(st){
-    return '<button class="dict-subtab'+(state.dictSubtopic===st.id?' active':'')+'" data-dict-sub="'+st.id+'">'+st.label+'</button>';
-  }).join('');
 
-  var contentHtml = '';
-  if (state.dictSubtopic === 'grammar') {
-    contentHtml = renderGrammarAllContent();
-  } else {
-    var allWords = [];
-    if (typeof HSK1_ALL !== 'undefined') allWords = allWords.concat(HSK1_ALL);
-    if (typeof HSK2_ALL !== 'undefined') allWords = allWords.concat(HSK2_ALL);
-    if (typeof HSK3_ALL !== 'undefined') allWords = allWords.concat(HSK3_ALL);
-    var search = (state.dictSearch || '').toLowerCase();
-    if (search) {
-      allWords = allWords.filter(function(w){
-        return (w.hanzi||'').indexOf(search)>=0 || (w.pinyin||'').toLowerCase().indexOf(search)>=0 || (w.vi||'').toLowerCase().indexOf(search)>=0 || (w.hv||'').toLowerCase().indexOf(search)>=0;
-      });
+  var html='<input class="dict-search" type="text" placeholder="Tìm từ, pinyin, nghĩa..." value="'+(state.dictSearch||'')+'" data-dict-search>';
+
+  groups.forEach(function(g){
+    if(g.locked){
+      html+='<div class="dict-group locked"><div class="dict-group-header">'+icon('book-open',16)+' '+g.label+' <small>('+g.data.length+' từ)</small> <span class="dict-lock">'+getLockMessage(g.id)+'</span></div></div>';
+      return;
     }
-    var display = allWords.slice(0, 100);
-    var items = display.map(function(w){
-      return '<div class="word-item">'+
-        '<div class="word-hanzi">'+(w.hanzi||w.h||'')+'</div>'+
-        '<div class="word-info">'+
-          '<div class="word-pinyin">'+(w.pinyin||w.p||'')+' <span style="font-size:11px;color:var(--c-text-dim)">'+(w.hv||'')+'</span></div>'+
-          '<div class="word-meaning">'+(w.vi||'')+'</div>'+
-          (w.ex?'<div style="font-size:11px;color:var(--c-text-dim);margin-top:2px">'+w.ex+'</div>':'')+
-        '</div>'+
-        '<button class="dict-add-btn" data-dict-add="'+(w.hanzi||w.h||'')+'">+ Ôn tập</button>'+
-      '</div>';
-    }).join('');
-    contentHtml = '<input class="dict-search" type="text" placeholder="Tìm từ, pinyin, nghĩa..." value="'+(state.dictSearch||'')+'" data-dict-search>'+
+    var words=g.data;
+    if(search) words=words.filter(function(w){return(w.hanzi||'').indexOf(search)>=0||(w.pinyin||'').toLowerCase().indexOf(search)>=0||(w.vi||'').toLowerCase().indexOf(search)>=0||(w.hv||'').toLowerCase().indexOf(search)>=0});
+    var expanded=state._dictExpanded===g.id;
+    var items=expanded&&words.length?words.slice(0,50).map(function(w){
+      return '<div class="word-item"><div class="word-hanzi">'+(w.hanzi||w.h||'')+'</div><div class="word-info"><div class="word-pinyin">'+(w.pinyin||w.p||'')+' <span style="font-size:11px;color:var(--c-text-dim)">'+(w.hv||'')+'</span></div><div class="word-meaning">'+(w.vi||'')+'</div>'+(w.ex?'<div style="font-size:11px;color:var(--c-text-dim);margin-top:2px">'+w.ex+'</div>':'')+'</div></div>';
+    }).join(''):'';
+    html+='<div class="dict-group"><div class="dict-group-header" data-dict-expand="'+g.id+'">'+icon(expanded?'arrow-left':'arrow-right',14)+' '+g.label+' <small>('+words.length+' từ)</small></div>'+(expanded?'<div class="dict-group-body">'+items+'</div>':'')+'</div>';
+  });
+
+  return '<div class="fade-in">'+html+'</div>';
+}
       (state.dictSearch && display.length===0 ? '<div class="placeholder-box">Không tìm thấy từ nào khớp với "'+state.dictSearch+'"</div>' : '')+
       '<div class="word-list">'+items+'</div>'+
       (allWords.length > 100 ? '<div class="placeholder-box" style="margin-top:12px">Hiển thị 100/'+allWords.length+' từ. Nhập từ khóa để thu hẹp.</div>' : '');
@@ -1660,6 +1653,10 @@ function attachEvents(){
   // Dictionary search
   var ds=document.querySelector('[data-dict-search]');
   if(ds){ds.oninput=function(){state.dictSearch=this.value;render()};ds.focus()}
+  // Dictionary expand groups
+  document.querySelectorAll('[data-dict-expand]').forEach(function(b){
+    b.onclick=function(){state._dictExpanded=state._dictExpanded===b.dataset.dictExpand?null:b.dataset.dictExpand;render()};
+  });
   // Dictionary subtabs
   document.querySelectorAll('[data-dict-sub]').forEach(function(b){
     b.onclick=function(){state.dictSubtopic=b.dataset.dictSub;render()};

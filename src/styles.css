@@ -2521,6 +2521,24 @@ body {
 }
 .review-start-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(37,99,235,.35); }
 
+/* Dictionary groups */
+.dict-group { margin-bottom: 4px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--c-border); }
+.dict-group.locked { opacity: .6; }
+.dict-group-header {
+  padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px;
+  font-weight: 600; font-size: 15px; color: var(--c-text); transition: background .15s;
+}
+.dict-group-header:hover { background: var(--c-bg); }
+.dict-group-header small { font-weight: 400; color: var(--c-text-dim); }
+.dict-lock { margin-left: auto; font-size: 12px; color: var(--c-text-dim); font-weight: 400; }
+.dict-group-body { padding: 0 16px 8px; }
+.dict-search {
+  width: 100%; padding: 12px 16px; border: 1px solid var(--c-border); border-radius: 24px;
+  font-family: var(--font-sans); font-size: 14px; margin-bottom: 16px;
+  outline: none; transition: border-color .2s;
+}
+.dict-search:focus { border-color: var(--c-primary); }
+
 /* Footer */
 .footer {
   background: var(--grad-footer); color: #CBD5E1;
