@@ -1341,46 +1341,7 @@ function renderLesson(){
   const lesson=lessons.find(function(l){return l.id===state.lessonId});
   if(!lesson) return '';
 
-  // Sequential modules — full practice flow
-  var modules = [
-    {id:'list',      num:'1', name:'Danh sách từ',   desc:'Xem toàn bộ từ vựng của bài học', icon:'📋'},
-    {id:'flashcard', num:'2', name:'Lật thẻ',        desc:'Tiếp thu — Nhận diện mặt chữ & ghi nhớ', icon:'🃏'},
-    {id:'meaning',   num:'3', name:'Chọn nghĩa',     desc:'Nhận biết — Chọn nghĩa tiếng Việt đúng', icon:'🎯'},
-    {id:'word',      num:'4', name:'Chọn từ',         desc:'Nhận biết — Chọn từ tiếng Trung đúng', icon:'🔤'},
-    {id:'fillin',    num:'5', name:'Điền từ',         desc:'Vận dụng — Điền từ vào chỗ trống trong câu', icon:'✍️'},
-    {id:'writing',   num:'6', name:'🤖 Viết câu (AI)', desc:'Sản sinh — AI tạo bài & chấm điểm từng ký tự', icon:'📝'},
-  ];
-
-  var currentMode = state.mode || 'list';
-
-  var moduleHtml = modules.map(function(m){
-    var cls = 'module-card';
-    if (m.id === currentMode) cls += ' current';
-    return '<div class="'+cls+'" data-lesson-module="'+m.id+'">'+
-      '<div class="module-step">'+m.num+'</div>'+
-      '<div class="module-info">'+
-        '<div class="module-name">'+m.icon+' '+m.name+'</div>'+
-        '<div class="module-desc">'+m.desc+'</div>'+
-      '</div>'+
-      '<div class="module-arrow">→</div>'+
-    '</div>';
-  }).join('');
-
-  // Render the active module content
-  var content = '';
-  if (currentMode === 'list') {
-    content = renderWordList(lesson);
-  } else if (currentMode === 'flashcard') {
-    content = renderFlashcard(lesson);
-  } else if (currentMode === 'meaning') {
-    content = renderLessonQuiz(lesson, 'meaning');
-  } else if (currentMode === 'word') {
-    content = renderLessonQuiz(lesson, 'word');
-  } else if (currentMode === 'fillin') {
-    content = renderLessonFillIn(lesson);
-  } else if (currentMode === 'writing') {
-    content = renderWriting(null, state.level);
-  }
+  var content = renderFlashcard(lesson);
 
   return '<div class="fade-in">'+
     '<div class="lesson-header">'+
@@ -1388,10 +1349,7 @@ function renderLesson(){
       '<div class="lesson-title-main">第'+lesson.id+'课 · '+lesson.title+'</div>'+
       '<div class="lesson-title-sub">'+lesson.titleVi+' — <strong>'+lesson.words.length+' từ vựng</strong></div>'+
     '</div>'+
-    '<div class="section-title" style="margin-top:0"><span class="section-icon">📋</span> Lộ trình luyện tập <span style="font-size:12px;color:var(--c-text-muted);font-weight:400">— Học theo thứ tự từ 1 đến 6 để đạt hiệu quả tốt nhất</span></div>'+
-    '<div class="module-sequence">'+moduleHtml+'</div>'+
-    '<div style="margin-top:20px">'+content+'</div>'+
-    (currentMode==='writing' ? '<div class="ai-feedback-placeholder" style="margin-top:16px"><span class="placeholder-box-icon">🤖</span> AI (DeepSeek) sẽ chấm từng ký tự: <span style="color:var(--c-success)">xanh</span> = đúng, <span style="color:var(--c-error)">đỏ</span> = sai + gợi ý sửa.<br>[Kéo lên để xem kết quả chấm sau khi Gửi bài]</div>' : '')+
+    content+
   '</div>';
 }
 
