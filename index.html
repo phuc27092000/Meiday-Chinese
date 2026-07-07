@@ -1509,30 +1509,81 @@ function generateSRQuiz(words,mode){
   state.quizIndex=0;state.quizScore=0;state.quizAnswered=false;state.quizDone=false;
 }
 
+// ═══════════════════════════════════════════
+// REVIEW TAB — New design with stats + exercise cards
+// ═══════════════════════════════════════════
+
 function renderSRSDashboard(){
-  // If actively reviewing, show flashcard or quiz ABOVE the selector
-  var reviewContent='';
-  if(state._reviewMode==='flashcard'&&state.fcShuffled.length)reviewContent=renderFCOnePage();
-  else if(state._reviewMode&&state.quizQuestions.length)reviewContent=state._reviewMode==='fillin'?renderFillInSRS():renderQuizSRS();
+  // Permission overlay for guest
+  if(!state.isLoggedIn) return '<div class="review-locked-overlay"><div class="review-locked-content">'+icon('user',32)+'<h3>Đăng nhập để ôn tập</h3><p>Theo dõi tiến độ và mở khóa tất cả chế độ luyện tập</p><button class="btn-google" data-action="login" style="margin:0 auto"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg><span>Đăng nhập với Google</span></button></div></div>';
 
-  var levels=[{id:'hsk1',label:'HSK 1',words:typeof HSK1_ALL!=='undefined'?HSK1_ALL.length:0,locked:isLevelLocked('hsk1')},{id:'hsk2',label:'HSK 2',words:typeof HSK2_ALL!=='undefined'?HSK2_ALL.length:0,locked:isLevelLocked('hsk2')},{id:'hsk3',label:'HSK 3',words:typeof HSK3_ALL!=='undefined'?HSK3_ALL.length:0,locked:isLevelLocked('hsk3')}];
-  var modes=[{id:'flashcard',icon:icon('columns-2',16),label:'Lật thẻ'},{id:'meaning',icon:icon('pencil',16),label:'Chọn nghĩa'},{id:'word',icon:icon('shuffle',16),label:'Chọn từ'},{id:'fillin',icon:icon('file-text',16),label:'Điền từ'}];
+  // In-session quiz/flashcard mode
+  if(state._reviewMode&&(state.fcShuffled.length||state.quizQuestions.length)){
+    if(state.quizDone) return renderReviewComplete();
+    if(state._reviewMode==='flashcard') return renderFCOnePage();
+    if(state._reviewMode==='fillin') return renderFillInSRS();
+    return renderQuizSRS();
+  }
 
+  // Dashboard: level selector + stats + exercise cards
+  return renderReviewDashboard();
+}
+
+function renderReviewDashboard(){
+  var learned=getLearnedWords().length;
+  var lv=state._reviewLevel||'hsk1';
+  var pool=lv==='hsk1'?HSK1_ALL:lv==='hsk2'?HSK2_ALL:HSK3_ALL;
+  if(!pool)pool=HSK1_ALL||[];
+  var total=pool.length;
+  var todayCount=Math.min(30,total);
+
+  // Level selector — single horizontal row
+  var levels=[{id:'hsk1',label:'HSK 1'},{id:'hsk2',label:'HSK 2'},{id:'hsk3',label:'HSK 3'}];
   var lvHtml=levels.map(function(l){
-    if(l.locked) return '<button class="review-lv-btn locked">'+l.label+'<small>🔒</small></button>';
-    var active=state._reviewLevel===l.id?'active':'';
-    return '<button class="review-lv-btn '+active+'" data-review-lv="'+l.id+'">'+l.label+'<small>'+l.words+' từ</small></button>';
+    var locked=isLevelLocked(l.id);
+    var cls='rv-lv-btn'+(lv===l.id?' active':'')+(locked?' locked':'');
+    return '<button class="'+cls+'" data-review-lv="'+l.id+'" '+(locked?'disabled':'')+'>'+l.label+(locked?' 🔒':'')+'</button>';
   }).join('');
 
+  // Exercise mode cards
+  var modes=[
+    {id:'flashcard',icon:icon('columns-2',22),title:'Lật thẻ',desc:'Hán tự → Pinyin + Nghĩa + Ví dụ',color:'#2563EB'},
+    {id:'meaning',icon:icon('pencil',22),title:'Chọn nghĩa',desc:'Xem Hán tự, chọn nghĩa tiếng Việt',color:'#16A34A'},
+    {id:'word',icon:icon('shuffle',22),title:'Chọn từ',desc:'Xem nghĩa, chọn Hán tự đúng',color:'#F97316'},
+    {id:'fillin',icon:icon('file-text',22),title:'Điền từ',desc:'Hoàn thành câu với từ đúng',color:'#7C3AED'},
+    {id:'writing',icon:icon('pen-line',22),title:'Luyện viết',desc:'Viết chữ Hán theo nét',color:'#DC2626'},
+  ];
   var modeHtml=modes.map(function(m){
-    var active=state._reviewMode===m.id?'active':'';
-    return '<button class="review-mode-btn '+active+'" data-review-mode="'+m.id+'">'+m.icon+m.label+'</button>';
+    return '<div class="rv-mode-card" data-action="review-start-mode" data-mode="'+m.id+'" style="--mode-color:'+m.color+'"><div class="rv-mode-icon" style="color:'+m.color+'">'+m.icon+'</div><div class="rv-mode-info"><div class="rv-mode-title">'+m.title+'</div><div class="rv-mode-desc">'+m.desc+'</div></div><div class="rv-mode-arrow">→</div></div>';
   }).join('');
 
-  return '<div class="fade-in">'+reviewContent+
-    '<div class="review-bar"><div class="review-lv-row">'+lvHtml+'</div><div class="review-mode-row">'+modeHtml+'</div>'+
-    (state._reviewLevel&&state._reviewMode?'<button class="review-start-btn" data-action="review-start">'+icon('zap',16)+' Bắt đầu ôn tập mới</button>':'<p style="text-align:center;color:var(--c-text-dim)">Chọn cấp độ và chế độ ôn tập</p>')+
-    '</div></div>';
+  return '<div class="fade-in">'+
+    // Level selector
+    '<div class="rv-level-scroll"><div class="rv-level-row">'+lvHtml+'</div></div>'+
+    // Stats
+    '<div class="rv-stats"><div class="rv-stat"><div class="rv-stat-num">'+todayCount+'</div><div class="rv-stat-label">Từ cần ôn hôm nay</div></div><div class="rv-stat"><div class="rv-stat-num">'+total+'</div><div class="rv-stat-label">Tổng từ vựng</div></div><div class="rv-stat"><div class="rv-stat-num" style="color:var(--c-success)">'+learned+'</div><div class="rv-stat-label">Đã thuộc</div></div></div>'+
+    // Exercise cards
+    '<div class="rv-mode-grid">'+modeHtml+'</div>'+
+  '</div>';
+}
+
+function renderReviewComplete(){
+  var t=state.quizQuestions.length;
+  var p=Math.round(state.quizScore/t*100);
+  var xp=state.quizScore*10;
+  var streak=parseInt(localStorage.getItem('subhsk_streak')||'0')+1;
+  localStorage.setItem('subhsk_streak',streak);
+  var wrong=state.quizQuestions.filter(function(q){return q.sel!==q.ci&&q.sel>=0});
+
+  var wrongHtml='';
+  if(wrong.length){
+    wrongHtml='<div class="rv-wrong-list"><div class="rv-wrong-title">Từ cần ôn lại ('+wrong.length+')</div>'+wrong.map(function(q){
+      var w=q.prompt||(q.options?q.options[q.ci]:'')||'';
+      return '<div class="rv-wrong-item"><span>'+w+'</span><span style="color:var(--c-text-dim)">'+q.sub+'</span></div>';
+    }).join('')+'</div>';
+  }
+
+  return '<div class="rv-complete fade-in"><div class="rv-complete-icon">'+icon('check-circle',48)+'</div><h2>Hoàn thành!</h2><div class="rv-score">'+state.quizScore+'/<strong>'+t+'</strong> · '+p+'%</div><div class="rv-xp">'+icon('zap',16)+' +'+xp+' XP · '+icon('star',16)+' '+streak+' ngày liên tiếp</div>'+wrongHtml+'<button class="rv-restart-btn" data-action="quiz-restart-srs">'+icon('rotate-cw',16)+' Làm lại</button></div>';
 }
 
 function renderQuizSRS(){
@@ -1728,33 +1779,21 @@ function attachEvents(){
   });
   // Review mode & level selection
   document.querySelectorAll('[data-review-lv]').forEach(function(b){
-    b.onclick=function(){state._reviewLevel=b.dataset.reviewLv;render()};
+    b.onclick=function(){state._reviewLevel=b.dataset.reviewLv;state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render()};
   });
-  document.querySelectorAll('[data-review-mode]').forEach(function(b){
-    b.onclick=function(){
-      state._reviewMode=b.dataset.reviewMode;
-      // If we have words loaded, switch mode immediately
-      if(state.fcShuffled.length&&state._reviewMode!=='flashcard'){
-        generateSRQuiz(state.fcShuffled,state._reviewMode);
-      }else if(state._reviewMode==='flashcard'&&state.fcShuffled.length){
-        state.quizQuestions=[];
-      }
-      render();
-    };
-  });
-  // Review start
-  document.querySelectorAll('[data-action="review-start"]').forEach(function(b){
-    b.onclick=function(){
-      var pool=[];
-      if(state._reviewLevel==='hsk1'&&typeof HSK1_ALL!=='undefined')pool=HSK1_ALL;
-      else if(state._reviewLevel==='hsk2'&&typeof HSK2_ALL!=='undefined')pool=HSK2_ALL;
-      else if(state._reviewLevel==='hsk3'&&typeof HSK3_ALL!=='undefined')pool=HSK3_ALL;
-      if(!pool.length)return;
-      var words=shuffle(pool.map(enrichWord)).slice(0,30);
+  // Review mode cards
+  document.querySelectorAll('[data-action="review-start-mode"]').forEach(function(b){
+    b.onclick=function(e){e.stopPropagation();
+      var mode=b.dataset.mode;
+      state._reviewMode=mode;
+      state.quizDone=false;
+      var pool=state._reviewLevel==='hsk1'?HSK1_ALL:state._reviewLevel==='hsk2'?HSK2_ALL:HSK3_ALL;
+      if(!pool)pool=HSK1_ALL||[];
+      var words=shuffle(pool.map(enrichWord)).slice(0,20);
       state.fcShuffled=words;state.fcIndex=0;state.fcFlipped=false;
-      if(state._reviewMode==='flashcard'){state.quizQuestions=[];render()}
-      else if(state._reviewMode==='fillin'){generateSRQuiz(words,'fillin');render()}
-      else{generateSRQuiz(words,state._reviewMode);render()}
+      if(mode!=='flashcard'){generateSRQuiz(words,mode)}
+      else{state.quizQuestions=[]}
+      render();
     };
   });
   // Lesson complete → go to Review tab
