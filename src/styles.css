@@ -2560,6 +2560,7 @@ body {
   cursor: pointer; box-shadow: var(--shadow-primary); transition: all .2s;
 }
 .fc-done-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(37,99,235,.35); }
+.fc-review-link { text-align: center; margin-top: 12px; }
 
 /* Review tab horizontal */
 .review-lv-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; justify-content: center; }

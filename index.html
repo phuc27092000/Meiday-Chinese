@@ -503,12 +503,10 @@ function renderHomeHero(){
       '</div>'+
     '</div>'+
     '<div class="hero-right">'+
-      '<div class="hero-vocab-card">'+
-        '<div class="hero-vocab-char">你</div>'+
-        '<div class="hero-vocab-pinyin">nǐ</div>'+
-        '<div class="hero-vocab-meaning">bạn, mày (đại từ nhân xưng ngôi thứ 2)</div>'+
-        '<div class="hero-vocab-wave"><span></span><span></span><span></span><span></span><span></span></div>'+
-      '</div>'+
+      (function(){var pool=typeof HSK1_ALL!=='undefined'?HSK1_ALL:[];var r1=pool[Math.floor(Math.random()*pool.length)]||{hanzi:'学',pinyin:'xué',vi:'học'};var r2=pool[Math.floor(Math.random()*pool.length)]||{hanzi:'好',pinyin:'hǎo',vi:'tốt'};
+        return '<div class="hero-vocab-card"><div class="hero-vocab-char">'+r1.hanzi+'</div><div class="hero-vocab-pinyin">'+r1.pinyin+'</div><div class="hero-vocab-meaning">'+r1.vi+'</div><div class="hero-vocab-wave"><span></span><span></span><span></span><span></span><span></span></div></div>'+
+        '<div class="hero-vocab-card"><div class="hero-vocab-char">'+r2.hanzi+'</div><div class="hero-vocab-pinyin">'+r2.pinyin+'</div><div class="hero-vocab-meaning">'+r2.vi+'</div><div class="hero-vocab-wave"><span></span><span></span><span></span><span></span><span></span></div></div>';
+      })()+
       '<div class="hero-progress-card">'+
         '<div class="hero-prog-item"><span class="hero-prog-icon">🔥</span><strong>'+streakDays+'</strong> ngày liên tiếp</div>'+
         '<div class="hero-prog-bar"><div class="hero-prog-fill" style="width:10%"></div></div>'+
@@ -1452,8 +1450,10 @@ function renderFCOnePage(){
       '<button class="fc-learn-btn '+(learned?'learned':'')+'" data-action="mark-learned">'+(learned?'✅ Đã thuộc':'📝 Đánh dấu đã thuộc')+'</button>'+
       '<button class="fc-learn-btn unlearned" data-action="mark-unlearned">🔄 Chưa thuộc</button>'+
     '</div>'+
-    // Show "Hoàn thành" when on last card
-    (state.fcIndex>=total-1?'<div class="fc-done-section"><div class="fc-done-icon">🎉</div><div class="fc-done-text">Bạn đã xem hết <strong>'+total+'</strong> từ trong bài này!</div><button class="fc-done-btn" data-action="go-review">'+icon('rotate-cw',16)+' Sang Ôn tập để luyện</button></div>':'')+
+    // Always show review link
+    '<div class="fc-review-link"><button class="fc-done-btn" data-action="go-review">'+icon('rotate-cw',16)+' Sang Ôn tập luyện thêm</button></div>'+
+    // Show completion on last card
+    (state.fcIndex>=total-1?'<div class="fc-done-section"><div class="fc-done-icon">🎉</div><div class="fc-done-text">Bạn đã xem hết <strong>'+total+'</strong> từ trong bài này!</div></div>':'')+
   '</div>';
 }
 
