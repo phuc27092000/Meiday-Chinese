@@ -1438,7 +1438,7 @@ function renderFCOnePage(){
         '<button class="fc-action-btn" data-speak="'+h+'" onclick="event.stopPropagation()">'+icon('volume-2',18)+' Phát âm</button>'+
         '<button class="fc-action-btn" data-action="toggle-stroke" onclick="event.stopPropagation()">'+icon('pen-line',18)+' Xem cách viết</button>'+
       '</div>'+
-      '<div class="fc-stroke-container" id="fc-stroke-area" style="display:none"></div>'+
+      '<div class="fc-stroke-container" style="display:none"></div>'+
       (ex?'<div class="fc-example"><div class="fc-ex-label">📖 Ví dụ:</div><div class="fc-ex-text">'+ex+'</div></div>':'')+
     '</div>'+
     '<div class="fc-nav-row">'+
@@ -1799,7 +1799,22 @@ function attachEvents(){
   });
   // Toggle stroke animation
   document.querySelectorAll('[data-action="toggle-stroke"]').forEach(function(b){
-    b.onclick=function(e){e.stopPropagation();var el=document.getElementById('fc-stroke-area');if(!el)return;if(el.style.display==='none'){el.style.display='block';var w=state.fcShuffled[state.fcIndex];if(w&&el.children.length===0&&typeof HanziWriter!=='undefined'){HanziWriter.create(el,w.hanzi,{width:280,height:280,padding:20,strokeAnimationSpeed:1,delayBetweenStrokes:300,strokeColor:'#2563EB',radicalColor:'#F97316',showOutline:true,showCharacter:false}).animateCharacter()}}else{el.style.display='none'}};
+    b.onclick=function(e){e.stopPropagation();
+      var card=b.closest('.fc-card');
+      if(!card)return;
+      var area=card.querySelector('.fc-stroke-container');
+      if(!area)return;
+      if(area.style.display==='none'||!area.style.display){
+        area.style.display='block';
+        var w=state.fcShuffled[state.fcIndex];
+        if(w&&area.children.length===0&&typeof HanziWriter!=='undefined'){
+          var h=w.hanzi||w.h||'';
+          HanziWriter.create(area,h,{width:260,height:260,padding:15,strokeAnimationSpeed:1,delayBetweenStrokes:200,strokeColor:'#2563EB',radicalColor:'#F97316',showOutline:true,showCharacter:false}).animateCharacter();
+        }
+      }else{
+        area.style.display='none';
+      }
+    };
   });
   // Review mode & level selection
   document.querySelectorAll('[data-review-lv]').forEach(function(b){
