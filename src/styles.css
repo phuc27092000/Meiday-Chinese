@@ -860,6 +860,13 @@ body {
 .level-card-wordcount { font-size: 12px; color: var(--c-text-dim); }
 .level-card-arrow { margin-top: 8px; font-size: 12px; color: var(--c-text-dim); }
 .level-card-top { display: flex; align-items: center; gap: 8px; width: 100%; }
+.level-card-samples { display: flex; gap: 4px; margin-top: 8px; }
+.lv-sample-char {
+  font-family: var(--font-cn); font-size: 22px; font-weight: 700;
+  color: var(--c-text); background: var(--c-bg);
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
 
 /* ── Lesson grid (level views) ─────────── */
 .lesson-grid {
