@@ -384,7 +384,7 @@ function generateLocalWritingData(subMode) {
 // ═══ SUPABASE AUTH ═══
 const SUPABASE_URL='https://gpmwzeurcwfiyxlomqsa.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbXd6ZXVyY3dmaXl4bG9tcXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTMwNzIsImV4cCI6MjA5ODAyOTA3Mn0.0G7W1OY6rqPDmzcPpGhNaUiDl6k9K0ijsME-dQjRujk';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'list',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,isVIP:false,showUserMenu:false,showMobileMenu:false,_reviewLevel:null,_reviewMode:null,_dictExpanded:null};
 
 // ═══ LOCK SYSTEM: Guest→HSK1, Free→HSK1-2, VIP→ALL ═══
