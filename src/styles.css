@@ -582,6 +582,41 @@ body {
 }
 .hero-btn-outline:hover { background: var(--c-primary-lighter); }
 
+/* VIP Banner */
+.vip-banner {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; margin-top: 16px;
+  background: linear-gradient(135deg, #FFF7ED, #FFFBEB);
+  border: 2px solid var(--c-accent); border-radius: var(--radius-lg);
+  cursor: pointer; transition: all .2s;
+}
+.vip-banner:hover { box-shadow: 0 4px 16px rgba(249,115,22,.3); transform: translateY(-1px); }
+.vip-banner-icon { color: var(--c-accent); flex-shrink: 0; }
+.vip-banner-text { flex: 1; font-size: 13px; line-height: 1.5; }
+.vip-banner-text strong { color: var(--c-accent-dark); font-size: 14px; }
+.vip-banner-text span { color: var(--c-text-muted); font-size: 12px; }
+.vip-banner-arrow { color: var(--c-accent); flex-shrink: 0; }
+
+/* Reading passage */
+.reading-section { margin-top: 32px; }
+.reading-card {
+  background: #fff; border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg); padding: 20px 24px;
+}
+.reading-zh {
+  font-family: var(--font-cn); font-size: 18px; font-weight: 700;
+  color: var(--c-text); line-height: 1.8; margin-bottom: 12px;
+}
+.reading-py {
+  font-size: 14px; color: var(--c-primary); font-weight: 500;
+  line-height: 1.7; margin-bottom: 8px;
+}
+.reading-vi {
+  font-size: 14px; color: var(--c-text-muted);
+  line-height: 1.7; padding-top: 8px;
+  border-top: 1px dashed var(--c-border);
+}
+
 /* Hero Right — Visual Cards */
 .hero-right { display: flex; flex-direction: column; gap: 16px; }
 .hero-vocab-card {
