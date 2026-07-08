@@ -69,6 +69,59 @@ function speak(text){
 }
 window.speechSynthesis&&window.speechSynthesis.getVoices();
 
+// ═══ WEB SPEECH API — Phát âm ═══
+function normalizeChinese(text){return text.replace(/[，。！？、；：""''【】《》（）\s,\.!\?;:'"\(\)\[\]{}…—–\-]/g,'')}
+
+function startSpeechRecognition(text,contextKey){
+  if(state.speechRec){stopSpeechRecognition();return}
+  var SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRecognition){showToast('Trình duyệt không hỗ trợ nhận diện giọng nói. Dùng Chrome hoặc Edge.','error');return}
+  var recognition=new SpeechRecognition();
+  recognition.lang='zh-CN';recognition.maxAlternatives=1;
+  var isReading=contextKey.indexOf('rd-full-')===0;
+  recognition.continuous=isReading;recognition.interimResults=isReading;
+  var allText='';
+  recognition.onresult=function(event){
+    for(var i=event.resultIndex;i<event.results.length;i++){
+      if(event.results[i].isFinal){allText+=event.results[i][0].transcript}
+    }
+    if(!isReading){
+      var recognized=event.results[0][0].transcript;
+      var match=normalizeChinese(recognized)===normalizeChinese(text);
+      state.speechResults[contextKey]={match:match,recognized:recognized,original:text,score:match?100:0};
+      state.speechRec=null;
+      if(match){showToast('Đọc chuẩn! (100đ)','success')}else{showToast('Chưa chính xác, hãy thử lại: '+recognized,'error')}
+      render();
+    }
+  };
+  recognition.onerror=function(event){
+    if(event.error==='no-speech'){ return}
+    else if(event.error!=='aborted'){showToast('Lỗi nhận diện: '+event.error,'error')}
+    state.speechRec=null;state.speechProcessing=null;render();
+  };
+  recognition.onend=function(){
+    if(!state.speechRec||state.speechRec.status!=='recording')return;
+    if(isReading&&allText){
+      var scored=scoreReading(text,allText);
+      state.speechResults[contextKey]=scored;state.speechRec=null;state.speechProcessing=null;
+      showToast('Kết quả: '+scored.correct+'/'+scored.total+' ký tự đúng ('+scored.score+'%)',scored.score>=80?'success':scored.score>=50?'':'error');
+      render();
+    }else if(isReading){
+      try{recognition.start()}catch(e){state.speechRec=null;state.speechProcessing=null;render()}
+    }else{state.speechRec=null;render()}
+  };
+  try{recognition.start()}catch(e){showToast('Không thể khởi động mic: '+e.message,'error');return}
+  state.speechRec={text:text,contextKey:contextKey,status:'recording',recognition:recognition};
+  render();
+}
+
+function stopSpeechRecognition(){
+  if(!state.speechRec||state.speechRec.status!=='recording')return;
+  var key=state.speechRec.contextKey;
+  if(key&&key.indexOf('rd-full-')===0){state.speechProcessing=key;render()}
+  try{state.speechRec.recognition.stop()}catch(e){}
+}
+
 
 
 
@@ -245,6 +298,11 @@ function icon(name, size) {
     'crown': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M3 20h18"/></svg>',
     'x': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
     'chevron-left': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+    'mic': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+    'square': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/></svg>',
+    'loader-2': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>',
+    'alert-circle': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    'lock': '<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
   };
   return icons[name] || '';
 }
@@ -387,7 +445,7 @@ function generateLocalWritingData(subMode) {
 const SUPABASE_URL='https://gpmwzeurcwfiyxlomqsa.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbXd6ZXVyY3dmaXl4bG9tcXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTMwNzIsImV4cCI6MjA5ODAyOTA3Mn0.0G7W1OY6rqPDmzcPpGhNaUiDl6k9K0ijsME-dQjRujk';
 const sb = window.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'flashcard',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,isVIP:false,showUserMenu:false,showMobileMenu:false,_reviewLevel:null,_reviewMode:null,_dictExpanded:null};
+let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'flashcard',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,isVIP:false,showUserMenu:false,showMobileMenu:false,_reviewLevel:null,_reviewMode:null,_dictExpanded:null,speechRec:null,speechResults:{},rdPinyinHidden:false,speechProcessing:null};
 
 // ═══ LOCK SYSTEM: Guest→HSK1, Free→HSK1-2, VIP→ALL ═══
 function getMaxUnlockedLevel(){if(!state.isLoggedIn)return 1;if(!state.isVIP)return 2;return 9;}
@@ -414,9 +472,11 @@ function renderFloatingTools(){
 }
 
 function render(){
-  const app=document.getElementById('app');
-  app.innerHTML=renderHeader()+renderMainContent()+renderFloatingTools()+renderFooter()+renderBottomNav();
-  attachEvents();
+  try{
+    const app=document.getElementById('app');
+    app.innerHTML=renderHeader()+renderMainContent()+renderFloatingTools()+renderFooter()+renderBottomNav();
+    attachEvents();
+  }catch(e){console.error('render error:',e);document.getElementById('app').innerHTML='<div style="padding:40px;text-align:center"><h3>Đã xảy ra lỗi</h3><p>'+e.message+'</p><button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;border-radius:8px;border:none;background:var(--c-primary);color:#fff;cursor:pointer">Tải lại trang</button></div>'}
 }
 
 function renderHeader(){
@@ -498,12 +558,6 @@ function renderHomeHero(){
       '<div class="hero-greeting">'+icon('smile',14)+' 你好! Chào mừng bạn đến với SubHSK Chinese</div>'+
       '<h1 class="hero-title">Học tiếng Trung<br>mỗi ngày cùng <span>SubHSK</span></h1>'+
       '<p class="hero-desc">Ôn tập từ vựng HSK 3.0 theo giáo trình chính thức. Lật thẻ, làm quiz, luyện viết — tất cả trong một ứng dụng.</p>'+
-      // VIP banner
-      '<div class="vip-banner" data-action="open-vip">'+
-        '<span class="vip-banner-icon">'+icon('crown',28)+'</span>'+
-        '<div class="vip-banner-text"><strong>NÂNG CẤP TÀI KHOẢN VIP</strong><br><span>Mở khóa toàn bộ HSK 3-9 · AI chấm bài · Không giới hạn</span></div>'+
-        '<span class="vip-banner-arrow">'+icon('arrow-right',20)+'</span>'+
-      '</div>'+
     '</div>'+
     '<div class="hero-right">'+
       (function(){var pool=typeof HSK1_ALL!=='undefined'?HSK1_ALL:[];var r1=pool[Math.floor(Math.random()*pool.length)]||{hanzi:'学',pinyin:'xué',vi:'học'};var r2=pool[Math.floor(Math.random()*pool.length)]||{hanzi:'好',pinyin:'hǎo',vi:'tốt'};
@@ -1069,9 +1123,10 @@ function renderHSK456Level(){
   return '<div class="fade-in"><div style="text-align:center;padding:30px 20px 24px"><div class="section-title" style="justify-content:center;border:none;margin:0 0 8px"><span class="badge" style="background:'+d.color+'">HSK '+d.num+'</span> <span style="font-family:Noto Serif SC,serif">Từ vựng HSK '+d.num+'</span></div><p style="font-size:14px;color:var(--md-sys-color-on-surface-variant)">'+d.all.length+' từ · '+sets.length+' mục · Mỗi mục 20 từ</p></div><div class="lesson-grid">'+grammarCard456+cards+'</div></div>';
 }
 function renderHSK456Set(){
-  const d=getHSK456Data();const sets=getHSK456Sets();
-  const s=sets.find(x=>x.id===state.lessonId);if(!s)return '';
-  return '<div class="fade-in"><button class="back-btn" data-action="back-456">← Quay lại</button><div class="lesson-view-title" style="font-size:26px">HSK '+d.num+' · Mục '+s.id+' <span style="font-size:16px;color:var(--md-sys-color-on-surface-variant)">(từ '+s.start+'–'+s.end+')</span></div><div class="lesson-view-sub">'+s.words.length+' từ vựng</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-m456="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-m456="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-m456="meaning">'+icon('pencil',14)+' Chọn nghĩa</button><button class="mode-tab '+(state.mode==='fillin'?'active':'')+'" data-m456="fillin">'+icon('file-text',14)+' Điền từ</button></div>'+(state.mode==='list'?r456List(s,d):'')+(state.mode==='flashcard'?r456FC(s,d):'')+(state.mode==='meaning'?r456Quiz(s,d):'')+(state.mode==='fillin'?r456Fill(s,d):'')+'</div>';
+  var d=getHSK456Data();var sets=getHSK456Sets();
+  var s=sets.find(function(x){return x.id===state.lessonId});if(!s)return'';
+  var gp=getSetGrammar(state.level,s.id);var grammarHtml=renderLessonGrammar(gp);
+  return '<div class="fade-in"><button class="back-btn" data-action="back-456">← Quay lại</button><div class="lesson-view-title" style="font-size:26px">HSK '+d.num+' · Mục '+s.id+' <span style="font-size:16px;color:var(--md-sys-color-on-surface-variant)">(từ '+s.start+'–'+s.end+')</span></div><div class="lesson-view-sub">'+s.words.length+' từ vựng</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-m456="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-m456="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-m456="meaning">'+icon('pencil',14)+' Chọn nghĩa</button><button class="mode-tab '+(state.mode==='fillin'?'active':'')+'" data-m456="fillin">'+icon('file-text',14)+' Điền từ</button></div>'+(state.mode==='list'?r456List(s,d):'')+(state.mode==='flashcard'?r456FC(s,d):'')+(state.mode==='meaning'?r456Quiz(s,d):'')+(state.mode==='fillin'?r456Fill(s,d):'')+grammarHtml+'</div>';
 }
 function r456List(s,d){
   return '<div class="word-list">'+s.words.map(w=>'<div class="word-item"><button class="audio-btn" data-speak="'+w.h+'">🔊</button><div class="word-hanzi">'+w.h+'</div><div class="word-info"><div class="word-pinyin">'+w.p+' <span style="color:var(--md-sys-color-secondary);font-size:12px">'+w.hv+'</span></div><div class="word-meaning">'+w.vi+'</div><div style="font-size:12px;color:var(--md-sys-color-on-surface-variant);margin-top:3px">'+w.ex+'</div></div><div class="word-pos">'+w.ps+'</div></div>').join('')+'</div>';
@@ -1289,10 +1344,11 @@ function renderHSK79Level(){
 }
 
 function renderHSK79Set(){
-  const sets=getHSK79Sets();
-  const s=sets.find(x=>x.id===state.lessonId);
-  if(!s)return '';
-  return '<div class="fade-in"><button class="back-btn" data-action="back-hsk79">← Quay lại</button><div class="lesson-view-title" style="font-size:26px">HSK 7-9 · Mục '+s.id+' <span style="font-size:16px;color:var(--md-sys-color-on-surface-variant)">(từ '+s.start+'–'+s.end+')</span></div><div class="lesson-view-sub">'+s.words.length+' từ vựng nâng cao</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-m79="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-m79="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-m79="meaning">'+icon('pencil',14)+' Chọn nghĩa</button><button class="mode-tab '+(state.mode==='fillin'?'active':'')+'" data-m79="fillin">'+icon('file-text',14)+' Điền từ</button></div>'+(state.mode==='list'?r79List(s):'')+(state.mode==='flashcard'?r79FC(s):'')+(state.mode==='meaning'?r79Quiz(s,state.mode):'')+(state.mode==='fillin'?r79Fill(s):'')+'</div>';
+  var sets=getHSK79Sets();
+  var s=sets.find(function(x){return x.id===state.lessonId});
+  if(!s)return'';
+  var gp=getSetGrammar('hsk79',s.id);var grammarHtml=renderLessonGrammar(gp);
+  return '<div class="fade-in"><button class="back-btn" data-action="back-hsk79">← Quay lại</button><div class="lesson-view-title" style="font-size:26px">HSK 7-9 · Mục '+s.id+' <span style="font-size:16px;color:var(--md-sys-color-on-surface-variant)">(từ '+s.start+'–'+s.end+')</span></div><div class="lesson-view-sub">'+s.words.length+' từ vựng nâng cao</div><div class="mode-tabs"><button class="mode-tab '+(state.mode==='list'?'active':'')+'" data-m79="list">'+icon('list',14)+' Danh sách</button><button class="mode-tab '+(state.mode==='flashcard'?'active':'')+'" data-m79="flashcard">'+icon('columns-2',14)+' Lật thẻ</button><button class="mode-tab '+(state.mode==='meaning'?'active':'')+'" data-m79="meaning">'+icon('pencil',14)+' Chọn nghĩa</button><button class="mode-tab '+(state.mode==='fillin'?'active':'')+'" data-m79="fillin">'+icon('file-text',14)+' Điền từ</button></div>'+(state.mode==='list'?r79List(s):'')+(state.mode==='flashcard'?r79FC(s):'')+(state.mode==='meaning'?r79Quiz(s,state.mode):'')+(state.mode==='fillin'?r79Fill(s):'')+grammarHtml+'</div>';
 }
 
 function r79List(s){
@@ -1354,16 +1410,60 @@ function gen79Fill(s){
   state.quizIndex=0;state.quizScore=0;state.quizAnswered=false;state.quizDone=false;
 }
 
+function getLessonGrammar(level, lessonId){
+  var g;
+  if(level==='hsk1')g=GRAMMAR_HSK1;
+  else if(level==='hsk2')g=GRAMMAR_HSK2;
+  else if(level==='hsk3')g=GRAMMAR_HSK3;
+  else return[];
+  return(g&&g[lessonId])?g[lessonId]:[];
+}
+
+function getSetGrammar(level, setId){
+  var arr;
+  if(level==='hsk4')arr=GRAMMAR_HSK4;
+  else if(level==='hsk5')arr=GRAMMAR_HSK5;
+  else if(level==='hsk6')arr=GRAMMAR_HSK6;
+  else if(level==='hsk79')arr=GRAMMAR_HSK79G;
+  else return[];
+  if(!arr||!arr.length)return[];
+  var totalSets;
+  if(level==='hsk4')totalSets=Math.ceil((typeof HSK4_ALL!=='undefined'?HSK4_ALL.length:0)/20)||1;
+  else if(level==='hsk5')totalSets=Math.ceil((typeof HSK5_ALL!=='undefined'?HSK5_ALL.length:0)/20)||1;
+  else if(level==='hsk6')totalSets=Math.ceil((typeof HSK6_ALL!=='undefined'?HSK6_ALL.length:0)/20)||1;
+  else totalSets=Math.ceil((typeof HSK79_ALL!=='undefined'?HSK79_ALL.length:0)/20)||1;
+  var perSet=Math.ceil(arr.length/totalSets);
+  var start=(setId-1)*perSet;
+  return arr.slice(start,start+perSet);
+}
+
+function renderLessonGrammar(grammarPoints){
+  if(!grammarPoints||!grammarPoints.length)return'';
+  var items=grammarPoints.map(function(g,i){
+    var egHtml='';
+    if(Array.isArray(g.eg)){egHtml=g.eg.map(function(e){return'<div style="padding:2px 0;line-height:1.6;font-family:Noto Sans SC,sans-serif">'+e+'</div>'}).join('')}
+    else if(g.eg){egHtml='<div style="line-height:1.6;font-family:Noto Sans SC,sans-serif">'+g.eg+'</div>'}
+    return'<div class="gr-item"><div class="gr-item-num">'+(i+1)+'</div><div class="gr-item-body"><div class="gr-item-cn">'+g.cn+'</div><div class="gr-item-vi">'+g.vi+'</div>'+(g.ex?'<div class="gr-item-ex">'+g.ex+'</div>':'')+'<div class="gr-item-eg">'+egHtml+'</div></div></div>';
+  }).join('');
+  return'<div class="grammar-section"><div class="section-title">'+icon('book-marked',20)+' Ngữ pháp</div><div class="grammar-list">'+items+'</div></div>';
+}
+
 function renderLesson(){
-  const lessons=getLessons();
-  const lesson=lessons.find(function(l){return l.id===state.lessonId});
+  var lessons=getLessons();
+  var lesson=lessons.find(function(l){return l.id===state.lessonId});
   if(!lesson) return '';
-
   if(state.mode==='writing') return renderWriting(null, state.level);
-
-  var content = renderFlashcard(lesson);
-  var readingHtml = renderReadingPassage(lesson);
-
+  var content, readingHtml, grammarHtml;
+  try{content=renderFlashcard(lesson)}catch(e){console.error('flashcard error:',e);content=''}
+  try{readingHtml=renderReadingPassage(lesson)}catch(e){console.error('reading error:',e);readingHtml=''}
+  try{var gp=getLessonGrammar(state.level,lesson.id);grammarHtml=renderLessonGrammar(gp)}catch(e){console.error('grammar error:',e);grammarHtml=''}
+  // Fallback: if reading is empty, show a basic section with the lesson's words
+  if(!readingHtml){
+    readingHtml='<div class="reading-section"><div class="section-title">'+icon('file-text',20)+' Bài đọc hiểu <span style="color:#94A3B8;font-size:12px;font-weight:400">(đang tải...)</span></div>'+
+      '<div class="reading-card"><div class="reading-zh" style="font-family:Noto Sans SC;font-size:18px;line-height:2">'+
+        lesson.words.map(function(w){return w.hanzi}).join(' ')+
+      '</div></div></div>';
+  }
   return '<div class="fade-in">'+
     '<div class="lesson-header">'+
       '<button class="lesson-back" data-action="back">'+icon('arrow-left',14)+' Quay lại</button>'+
@@ -1372,48 +1472,98 @@ function renderLesson(){
     '</div>'+
     content+
     readingHtml+
+    grammarHtml+
   '</div>';
 }
 
 // ── READING PASSAGES ─────────────────────
 var READING_PASSAGES = {
   hsk1: [
-    {id:1,zh:'你好！我是学生。你是老师吗？',py:'Nǐ hǎo! Wǒ shì xuéshēng. Nǐ shì lǎoshī ma?',vi:'Xin chào! Tôi là học sinh. Bạn là giáo viên phải không?'},
-    {id:2,zh:'我叫小明。你叫什么名字？认识你很高兴。',py:'Wǒ jiào Xiǎomíng. Nǐ jiào shénme míngzi? Rènshi nǐ hěn gāoxìng.',vi:'Tôi tên là Tiểu Minh. Bạn tên là gì? Rất vui được gặp bạn.'},
-    {id:3,zh:'我是中国人。她是谁？她是我的女朋友。',py:'Wǒ shì Zhōngguó rén. Tā shì shéi? Tā shì wǒ de nǚpéngyou.',vi:'Tôi là người Trung Quốc. Cô ấy là ai? Cô ấy là bạn gái của tôi.'},
-    {id:4,zh:'我有两个孩子，一个儿子和一个女儿。',py:'Wǒ yǒu liǎng ge háizi, yí ge érzi hé yí ge nǚ\'ér.',vi:'Tôi có hai đứa con, một con trai và một con gái.'},
-    {id:5,zh:'今天我休息。我喜欢吃面条儿和饺子。',py:'Jīntiān wǒ xiūxi. Wǒ xǐhuan chī miàntiáor hé jiǎozi.',vi:'Hôm nay tôi nghỉ. Tôi thích ăn mì và sủi cảo.'},
-    {id:6,zh:'你的手机号是多少？我想去超市买东西。',py:'Nǐ de shǒujī hào shì duōshao? Wǒ xiǎng qù chāoshì mǎi dōngxi.',vi:'Số điện thoại của bạn là bao nhiêu? Tôi muốn đi siêu thị mua đồ.'},
-    {id:7,zh:'我晚上六点半下班。现在几点？我们去看电影吧！',py:'Wǒ wǎnshang liù diǎn bàn xiàbān. Xiànzài jǐ diǎn? Wǒmen qù kàn diànyǐng ba!',vi:'Tối tôi 6 giờ rưỡi tan làm. Bây giờ mấy giờ? Chúng ta đi xem phim đi!'},
-    {id:8,zh:'我爸爸也在医院工作。他是医生，我妈妈是老师。',py:'Wǒ bàba yě zài yīyuàn gōngzuò. Tā shì yīshēng, wǒ māma shì lǎoshī.',vi:'Bố tôi cũng làm ở bệnh viện. Ông là bác sĩ, mẹ tôi là giáo viên.'},
-    {id:9,zh:'我明天上午在学校学习。下午我去书店看书。',py:'Wǒ míngtiān shàngwǔ zài xuéxiào xuéxí. Xiàwǔ wǒ qù shūdiàn kàn shū.',vi:'Sáng mai tôi học ở trường. Chiều tôi đi hiệu sách đọc sách.'},
-    {id:10,zh:'这儿的苹果真便宜！多少钱一斤？太贵了！',py:'Zhèr de píngguǒ zhēn piányi! Duōshao qián yì jīn? Tài guì le!',vi:'Táo ở đây rẻ thật! Bao nhiêu tiền một cân? Đắt quá!'},
-    {id:11,zh:'我读大学呢。你学什么？我会说一点儿汉语。',py:'Wǒ dú dàxué ne. Nǐ xué shénme? Wǒ huì shuō yìdiǎnr Hànyǔ.',vi:'Tôi đang học đại học. Bạn học gì? Tôi biết nói một chút tiếng Trung.'},
-    {id:12,zh:'昨天下雪了，天气很冷。今天下雨了，我不太舒服。',py:'Zuótiān xià xuě le, tiānqì hěn lěng. Jīntiān xià yǔ le, wǒ bú tài shūfu.',vi:'Hôm qua có tuyết, thời tiết rất lạnh. Hôm nay mưa, tôi không được khỏe.'},
-    {id:13,zh:'请给我一杯茶。可以吗？谢谢！不客气。',py:'Qǐng gěi wǒ yì bēi chá. Kěyǐ ma? Xièxie! Bú kèqi.',vi:'Cho tôi một tách trà. Được không? Cảm ơn! Không có gì.'},
-    {id:14,zh:'我看了一个电影。他们都来了。不要说话！',py:'Wǒ kàn le yí ge diànyǐng. Tāmen dōu lái le. Búyào shuōhuà!',vi:'Tôi đã xem một bộ phim. Họ đều đến rồi. Đừng nói chuyện!'},
-    {id:15,zh:'我想再去一次中国。你爱你的家人吗？我很爱他们。',py:'Wǒ xiǎng zài qù yí cì Zhōngguó. Nǐ ài nǐ de jiārén ma? Wǒ hěn ài tāmen.',vi:'Tôi muốn đi Trung Quốc thêm lần nữa. Bạn có yêu gia đình không? Tôi rất yêu họ.'},
+    {id:1,zh:'你好！我是学生。你是老师吗？我不是老师，我是学生。我叫小明，我是中国人。我今年二十岁。我在北京大学学习。我学习汉语和英语。我有很多好朋友。他们都是很好的人。我很高兴认识你。你叫什么名字？你是哪国人？你会说汉语吗？认识你很高兴。',py:'Nǐ hǎo! Wǒ shì xuéshēng. Nǐ shì lǎoshī ma? Wǒ bú shì lǎoshī, wǒ shì xuéshēng. Wǒ jiào Xiǎomíng, wǒ shì Zhōngguó rén. Wǒ jīnnián èrshí suì. Wǒ zài Běijīng Dàxué xuéxí. Wǒ xuéxí Hànyǔ hé Yīngyǔ. Wǒ yǒu hěn duō hǎo péngyou. Tāmen dōu shì hěn hǎo de rén. Wǒ hěn gāoxìng rènshi nǐ. Nǐ jiào shénme míngzi? Nǐ shì nǎ guó rén? Nǐ huì shuō Hànyǔ ma? Rènshi nǐ hěn gāoxìng.',vi:'Xin chào! Tôi là học sinh. Bạn là giáo viên phải không? Tôi không phải giáo viên, tôi là học sinh. Tôi tên Tiểu Minh, tôi là người Trung Quốc. Tôi năm nay 20 tuổi. Tôi học ở Đại học Bắc Kinh. Tôi học tiếng Trung và tiếng Anh. Tôi có rất nhiều bạn tốt. Họ đều là những người rất tốt. Tôi rất vui được gặp bạn. Bạn tên là gì? Bạn là người nước nào? Bạn biết nói tiếng Trung không? Rất vui được gặp bạn.'},
+    {id:2,zh:'我叫小明。你叫什么名字？我叫李华。我是中国人。你是哪国人？我是越南人。认识你很高兴。你家有几口人？我家有四口人：爸爸、妈妈、哥哥和我。我爸爸是医生，他在医院工作。我妈妈是老师，她在学校工作。我哥哥是大学生，他学习很好。我们都爱我们的家人。你呢？你家有谁？',py:'Wǒ jiào Xiǎomíng. Nǐ jiào shénme míngzi? Wǒ jiào Lǐ Huá. Wǒ shì Zhōngguó rén. Nǐ shì nǎ guó rén? Wǒ shì Yuènán rén. Rènshi nǐ hěn gāoxìng. Nǐ jiā yǒu jǐ kǒu rén? Wǒ jiā yǒu sì kǒu rén: bàba, māma, gēge hé wǒ. Wǒ bàba shì yīshēng, tā zài yīyuàn gōngzuò. Wǒ māma shì lǎoshī, tā zài xuéxiào gōngzuò. Wǒ gēge shì dàxuéshēng, tā xuéxí hěn hǎo. Wǒmen dōu ài wǒmen de jiārén. Nǐ ne? Nǐ jiā yǒu shéi?',vi:'Tôi tên Tiểu Minh. Bạn tên là gì? Tôi tên Lý Hoa. Tôi là người Trung Quốc. Bạn là người nước nào? Tôi là người Việt Nam. Rất vui được gặp bạn. Nhà bạn có mấy người? Nhà tôi có 4 người: bố, mẹ, anh trai và tôi. Bố tôi là bác sĩ, ông làm ở bệnh viện. Mẹ tôi là giáo viên, bà làm ở trường học. Anh tôi là sinh viên, anh ấy học rất giỏi. Chúng tôi đều yêu gia đình. Còn bạn? Nhà bạn có những ai?'},
+    {id:3,zh:'我是中国人。她是谁？她是我的女朋友。她叫小美，她是中国人。她今年十九岁。她很漂亮，也很聪明。她在大学学习汉语。她喜欢看书和听音乐。我认识她三年了，我们是很好的朋友。她是谁？她是我的同学，也是我的好朋友。你呢？你有女朋友吗？你的好朋友是谁？',py:'Wǒ shì Zhōngguó rén. Tā shì shéi? Tā shì wǒ de nǚpéngyou. Tā jiào Xiǎoměi, tā shì Zhōngguó rén. Tā jīnnián shíjiǔ suì. Tā hěn piàoliang, yě hěn cōngmíng. Tā zài dàxué xuéxí Hànyǔ. Tā xǐhuan kàn shū hé tīng yīnyuè. Wǒ rènshi tā sān nián le, wǒmen shì hěn hǎo de péngyou. Tā shì shéi? Tā shì wǒ de tóngxué, yě shì wǒ de hǎo péngyou. Nǐ ne? Nǐ yǒu nǚpéngyou ma? Nǐ de hǎo péngyou shì shéi?',vi:'Tôi là người Trung Quốc. Cô ấy là ai? Cô ấy là bạn gái của tôi. Cô ấy tên Tiểu Mỹ, cô ấy là người Trung Quốc. Cô ấy năm nay 19 tuổi. Cô ấy rất đẹp, cũng rất thông minh. Cô ấy học tiếng Trung ở đại học. Cô ấy thích đọc sách và nghe nhạc. Tôi quen cô ấy 3 năm rồi, chúng tôi là bạn rất tốt. Cô ấy là ai? Cô ấy là bạn cùng lớp, cũng là bạn tốt của tôi. Còn bạn? Bạn có bạn gái không? Bạn tốt của bạn là ai?'},
+    {id:4,zh:'我有两个孩子，一个儿子和一个女儿。儿子叫大明，他今年十岁，他喜欢踢足球。女儿叫小花，她今年七岁，她喜欢画画儿。他们都很好，我很爱他们。我每天送他们去学校。他们学习很努力。晚上我们一起吃饭，然后看电视或者看书。周末我们去公园玩，他们很高兴。你喜欢孩子吗？你有几个孩子？',py:'Wǒ yǒu liǎng ge háizi, yí ge érzi hé yí ge nǚ\'ér. Érzi jiào Dàmíng, tā jīnnián shí suì, tā xǐhuan tī zúqiú. Nǚ\'ér jiào Xiǎohuā, tā jīnnián qī suì, tā xǐhuan huà huàr. Tāmen dōu hěn hǎo, wǒ hěn ài tāmen. Wǒ měitiān sòng tāmen qù xuéxiào. Tāmen xuéxí hěn nǔlì. Wǎnshang wǒmen yìqǐ chīfàn, ránhòu kàn diànshì huòzhě kàn shū. Zhōumò wǒmen qù gōngyuán wán, tāmen hěn gāoxìng. Nǐ xǐhuan háizi ma? Nǐ yǒu jǐ ge háizi?',vi:'Tôi có hai đứa con, một trai một gái. Con trai tên Đại Minh, cháu năm nay 10 tuổi, cháu thích đá bóng. Con gái tên Tiểu Hoa, cháu năm nay 7 tuổi, cháu thích vẽ tranh. Các cháu đều rất ngoan, tôi rất yêu chúng. Mỗi ngày tôi đưa chúng đến trường. Chúng học rất chăm chỉ. Buổi tối chúng tôi cùng ăn cơm, rồi xem TV hoặc đọc sách. Cuối tuần chúng tôi đi công viên chơi, chúng rất vui. Bạn có thích trẻ con không? Bạn có mấy đứa con?'},
+    {id:5,zh:'今天我休息。我喜欢吃面条儿和饺子。早上我吃了两个包子和一杯牛奶。中午我和朋友去饭馆吃饭。我们吃了米饭、鱼和青菜。鱼很好吃，青菜也很新鲜。我们还喝了一点儿茶。下午我去超市买水果。苹果五块钱一斤，很便宜。我还买了香蕉和葡萄。晚上我在家做饭，我做了面条儿和饺子。你吃饭了吗？你喜欢吃什么？',py:'Jīntiān wǒ xiūxi. Wǒ xǐhuan chī miàntiáor hé jiǎozi. Zǎoshang wǒ chī le liǎng ge bāozi hé yì bēi niúnǎi. Zhōngwǔ wǒ hé péngyou qù fànguǎn chīfàn. Wǒmen chī le mǐfàn, yú hé qīngcài. Yú hěn hǎochī, qīngcài yě hěn xīnxiān. Wǒmen hái hē le yìdiǎnr chá. Xiàwǔ wǒ qù chāoshì mǎi shuǐguǒ. Píngguǒ wǔ kuài qián yì jīn, hěn piányi. Wǒ hái mǎi le xiāngjiāo hé pútao. Wǎnshang wǒ zài jiā zuòfàn, wǒ zuò le miàntiáor hé jiǎozi. Nǐ chīfàn le ma? Nǐ xǐhuan chī shénme?',vi:'Hôm nay tôi nghỉ. Tôi thích ăn mì và sủi cảo. Buổi sáng tôi ăn 2 cái bánh bao và 1 cốc sữa. Buổi trưa tôi cùng bạn đi nhà hàng ăn cơm. Chúng tôi ăn cơm, cá và rau xanh. Cá rất ngon, rau cũng rất tươi. Chúng tôi còn uống một ít trà. Chiều tôi đi siêu thị mua hoa quả. Táo 5 tệ một cân, rất rẻ. Tôi còn mua chuối và nho. Tối tôi ở nhà nấu ăn, tôi làm mì và sủi cảo. Bạn ăn cơm chưa? Bạn thích ăn gì?'},
+    {id:6,zh:'你的手机号是多少？我想去超市买东西。我的手机号是一三八零零零零。你有手机吗？我的手机是白色的，很好看。我用手机打电话、发短信，还上网看新闻。超市离我家不远，我走路十分钟就到了。超市很大，里面有很多东西。我要买水果、蔬菜和面包。对了，我还要买牛奶和鸡蛋。你想跟我一起去超市吗？我们可以在那儿见面。',py:'Nǐ de shǒujī hào shì duōshao? Wǒ xiǎng qù chāoshì mǎi dōngxi. Wǒ de shǒujī hào shì yāo sān bā líng líng líng líng. Nǐ yǒu shǒujī ma? Wǒ de shǒujī shì báisè de, hěn hǎokàn. Wǒ yòng shǒujī dǎ diànhuà, fā duǎnxìn, hái shàngwǎng kàn xīnwén. Chāoshì lí wǒ jiā bù yuǎn, wǒ zǒulù shí fēnzhōng jiù dào le. Chāoshì hěn dà, lǐmiàn yǒu hěn duō dōngxi. Wǒ yào mǎi shuǐguǒ, shūcài hé miànbāo. Duì le, wǒ hái yào mǎi niúnǎi hé jīdàn. Nǐ xiǎng gēn wǒ yìqǐ qù chāoshì ma? Wǒmen kěyǐ zài nàr jiànmiàn.',vi:'Số điện thoại của bạn là bao nhiêu? Tôi muốn đi siêu thị mua đồ. Số của tôi là 1380000. Bạn có điện thoại không? Điện thoại của tôi màu trắng, rất đẹp. Tôi dùng điện thoại gọi điện, nhắn tin, và lên mạng xem tin tức. Siêu thị cách nhà tôi không xa, tôi đi bộ 10 phút là đến. Siêu thị rất to, bên trong có rất nhiều đồ. Tôi muốn mua hoa quả, rau và bánh mì. À đúng rồi, tôi còn muốn mua sữa và trứng. Bạn có muốn đi siêu thị cùng tôi không? Chúng ta có thể gặp ở đó.'},
+    {id:7,zh:'我晚上六点半下班。现在几点？我们去看电影吧！现在七点一刻，还早呢。我们看什么电影？有一部新电影很好看，是爱情片。电影几点开始？电影八点开始。我们可以先吃饭，然后去看电影。你想去哪儿吃饭？学校旁边有一家中国饭馆，很好吃。好，我请客。你太好了，谢谢你！电影票多少钱一张？五十块钱。我们买两张吧。',py:'Wǒ wǎnshang liù diǎn bàn xiàbān. Xiànzài jǐ diǎn? Wǒmen qù kàn diànyǐng ba! Xiànzài qī diǎn yí kè, hái zǎo ne. Wǒmen kàn shénme diànyǐng? Yǒu yí bù xīn diànyǐng hěn hǎokàn, shì àiqíng piàn. Diànyǐng jǐ diǎn kāishǐ? Diànyǐng bā diǎn kāishǐ. Wǒmen kěyǐ xiān chīfàn, ránhòu qù kàn diànyǐng. Nǐ xiǎng qù nǎr chīfàn? Xuéxiào pángbiān yǒu yì jiā Zhōngguó fànguǎn, hěn hǎochī. Hǎo, wǒ qǐngkè. Nǐ tài hǎo le, xièxie nǐ! Diànyǐng piào duōshao qián yì zhāng? Wǔshí kuài qián. Wǒmen mǎi liǎng zhāng ba.',vi:'Tối tôi 6 giờ rưỡi tan làm. Bây giờ mấy giờ? Chúng ta đi xem phim đi! Bây giờ 7:15, còn sớm. Chúng ta xem phim gì? Có một bộ phim mới rất hay, là phim tình cảm. Phim mấy giờ bắt đầu? Phim 8 giờ bắt đầu. Chúng ta có thể ăn cơm trước, rồi đi xem phim. Bạn muốn đi đâu ăn? Cạnh trường có một nhà hàng Trung Quốc, rất ngon. Được, tôi mời. Bạn tốt quá, cảm ơn bạn! Vé xem phim bao nhiêu tiền một vé? 50 tệ. Chúng ta mua 2 vé nhé.'},
+    {id:8,zh:'我爸爸也在医院工作。他是医生，我妈妈是老师。我爸爸今年五十岁，他工作很忙。每天早上他七点就去医院。他有很多病人，他对病人很好。我妈妈四十八岁，她在小学教书。她教汉语，学生们很喜欢她。我还有一个妹妹，她在读高中。她学习很努力，想要考上好大学。我们家有四口人，我们都很爱彼此。周末我们常常一起吃饭，聊天，看电视。你的家人做什么工作？',py:'Wǒ bàba yě zài yīyuàn gōngzuò. Tā shì yīshēng, wǒ māma shì lǎoshī. Wǒ bàba jīnnián wǔshí suì, tā gōngzuò hěn máng. Měitiān zǎoshang tā qī diǎn jiù qù yīyuàn. Tā yǒu hěn duō bìngrén, tā duì bìngrén hěn hǎo. Wǒ māma sìshíbā suì, tā zài xiǎoxué jiāoshū. Tā jiāo Hànyǔ, xuéshēngmen hěn xǐhuan tā. Wǒ hái yǒu yí ge mèimei, tā zài dú gāozhōng. Tā xuéxí hěn nǔlì, xiǎng yào kǎoshang hǎo dàxué. Wǒmen jiā yǒu sì kǒu rén, wǒmen dōu hěn ài bǐcǐ. Zhōumò wǒmen chángcháng yìqǐ chīfàn, liáotiān, kàn diànshì. Nǐ de jiārén zuò shénme gōngzuò?',vi:'Bố tôi cũng làm ở bệnh viện. Ông là bác sĩ, mẹ tôi là giáo viên. Bố tôi năm nay 50 tuổi, ông làm việc rất bận. Mỗi sáng 7 giờ ông đã đi bệnh viện. Ông có rất nhiều bệnh nhân, ông đối xử với bệnh nhân rất tốt. Mẹ tôi 48 tuổi, bà dạy ở trường tiểu học. Bà dạy tiếng Trung, học sinh rất thích bà. Tôi còn có một em gái, em ấy đang học cấp 3. Em ấy học rất chăm, muốn thi đỗ đại học tốt. Nhà tôi có 4 người, chúng tôi đều rất yêu thương nhau. Cuối tuần chúng tôi thường cùng nhau ăn cơm, trò chuyện, xem TV. Gia đình bạn làm nghề gì?'},
+    {id:9,zh:'我明天上午在学校学习。下午我去书店看书。早上八点我有汉语课，老师教我们新课文。我们学习很多生词和语法。十点钟下课，我和同学去操场跑步。中午在食堂吃饭，我吃了米饭和鸡肉。下午三点我去书店，书店很大很安静。我喜欢看小说和故事书，有时候也看学习书。我在书店看了两个小时的书。然后买了一本词典，花了一百块钱。晚上我回家复习功课，写作业。你看过什么好书？你喜欢去书店吗？',py:'Wǒ míngtiān shàngwǔ zài xuéxiào xuéxí. Xiàwǔ wǒ qù shūdiàn kàn shū. Zǎoshang bā diǎn wǒ yǒu Hànyǔ kè, lǎoshī jiāo wǒmen xīn kèwén. Wǒmen xuéxí hěn duō shēngcí hé yǔfǎ. Shí diǎn zhōng xiàkè, wǒ hé tóngxué qù cāochǎng pǎobù. Zhōngwǔ zài shítáng chīfàn, wǒ chī le mǐfàn hé jīròu. Xiàwǔ sān diǎn wǒ qù shūdiàn, shūdiàn hěn dà hěn ānjìng. Wǒ xǐhuan kàn xiǎoshuō hé gùshi shū, yǒu shíhou yě kàn xuéxí shū. Wǒ zài shūdiàn kàn le liǎng ge xiǎoshí de shū. Ránhòu mǎi le yì běn cídiǎn, huā le yìbǎi kuài qián. Wǎnshang wǒ huíjiā fùxí gōngkè, xiě zuòyè. Nǐ kànguo shénme hǎo shū? Nǐ xǐhuan qù shūdiàn ma?',vi:'Sáng mai tôi học ở trường. Chiều tôi đi hiệu sách đọc sách. 8 giờ sáng tôi có tiết tiếng Trung, thầy dạy chúng tôi bài mới. Chúng tôi học rất nhiều từ mới và ngữ pháp. 10 giờ tan học, tôi và bạn cùng lớp ra sân chạy bộ. Buổi trưa ăn ở nhà ăn, tôi ăn cơm và thịt gà. 3 giờ chiều tôi đi hiệu sách, hiệu sách rất to và yên tĩnh. Tôi thích đọc tiểu thuyết và truyện, thỉnh thoảng cũng xem sách học. Tôi ở hiệu sách đọc sách 2 tiếng. Sau đó mua một quyển từ điển, hết 100 tệ. Buổi tối tôi về nhà ôn bài, làm bài tập. Bạn đã đọc quyển sách hay nào chưa? Bạn có thích đi hiệu sách không?'},
+    {id:10,zh:'这儿的苹果真便宜！多少钱一斤？太贵了！苹果五块钱一斤，香蕉三块五一斤。我要两斤苹果和一斤香蕉。一共多少钱？苹果十块，香蕉三块五，一共十三块五。给你二十块。找你六块五。你还要别的吗？我再要一斤葡萄。葡萄多少钱一斤？葡萄十五块钱一斤。太贵了！不要葡萄了。西瓜呢？西瓜两块五一斤。好，来一个西瓜，要小的。你买了好多东西啊！是啊，家里没有水果了。',py:'Zhèr de píngguǒ zhēn piányi! Duōshao qián yì jīn? Tài guì le! Píngguǒ wǔ kuài qián yì jīn, xiāngjiāo sān kuài wǔ yì jīn. Wǒ yào liǎng jīn píngguǒ hé yì jīn xiāngjiāo. Yígòng duōshao qián? Píngguǒ shí kuài, xiāngjiāo sān kuài wǔ, yígòng shísān kuài wǔ. Gěi nǐ èrshí kuài. Zhǎo nǐ liù kuài wǔ. Nǐ hái yào bié de ma? Wǒ zài yào yì jīn pútao. Pútao duōshao qián yì jīn? Pútao shíwǔ kuài qián yì jīn. Tài guì le! Bú yào pútao le. Xīguā ne? Xīguā liǎng kuài wǔ yì jīn. Hǎo, lái yí ge xīguā, yào xiǎo de. Nǐ mǎi le hǎo duō dōngxi a! Shì a, jiā lǐ méiyǒu shuǐguǒ le.',vi:'Táo ở đây rẻ thật! Bao nhiêu tiền một cân? Đắt quá! Táo 5 tệ một cân, chuối 3.5 tệ một cân. Tôi muốn 2 cân táo và 1 cân chuối. Tổng cộng bao nhiêu? Táo 10 tệ, chuối 3.5 tệ, tổng 13.5 tệ. Gửi bạn 20 tệ. Trả lại bạn 6.5 tệ. Bạn còn muốn gì nữa không? Tôi muốn thêm 1 cân nho. Nho bao nhiêu tiền 1 cân? Nho 15 tệ 1 cân. Đắt quá! Không lấy nho nữa. Thế dưa hấu thì sao? Dưa hấu 2.5 tệ 1 cân. Được, lấy một quả dưa hấu, quả nhỏ thôi. Bạn mua nhiều đồ thế! Ừ, nhà hết hoa quả rồi.'},
+    {id:11,zh:'我读大学呢。你学什么？我会说一点儿汉语。我在北京大学学习中文，这是我的专业。除了中文，我还学习英语和计算机。学习很忙，但是很有意思。我每天都有课，有时候晚上也要上课。我会说一点儿汉语，但是说得不太好。我的听力和阅读还可以，写汉字比较难。你呢？你学什么？你是在校学生还是已经工作了？我想找一个中国朋友练习说汉语。你能帮我吗？我们一起学习吧！',py:'Wǒ dú dàxué ne. Nǐ xué shénme? Wǒ huì shuō yìdiǎnr Hànyǔ. Wǒ zài Běijīng Dàxué xuéxí Zhōngwén, zhè shì wǒ de zhuānyè. Chúle Zhōngwén, wǒ hái xuéxí Yīngyǔ hé jìsuànjī. Xuéxí hěn máng, dànshì hěn yǒu yìsi. Wǒ měitiān dōu yǒu kè, yǒu shíhou wǎnshang yě yào shàngkè. Wǒ huì shuō yìdiǎnr Hànyǔ, dànshì shuō de bú tài hǎo. Wǒ de tīnglì hé yuèdú hái kěyǐ, xiě Hànzì bǐjiào nán. Nǐ ne? Nǐ xué shénme? Nǐ shì zài xiào xuéshēng háishì yǐjīng gōngzuò le? Wǒ xiǎng zhǎo yí ge Zhōngguó péngyou liànxí shuō Hànyǔ. Nǐ néng bāng wǒ ma? Wǒmen yìqǐ xuéxí ba!',vi:'Tôi đang học đại học. Bạn học gì? Tôi biết nói một chút tiếng Trung. Tôi học tiếng Trung ở Đại học Bắc Kinh, đây là chuyên ngành của tôi. Ngoài tiếng Trung, tôi còn học tiếng Anh và máy tính. Học rất bận, nhưng rất thú vị. Mỗi ngày tôi đều có tiết, có lúc buổi tối cũng phải lên lớp. Tôi biết nói một chút tiếng Trung, nhưng nói chưa tốt lắm. Nghe và đọc của tôi còn được, viết chữ Hán thì khó hơn. Còn bạn? Bạn học gì? Bạn là sinh viên hay đã đi làm rồi? Tôi muốn tìm một người bạn Trung Quốc để luyện nói. Bạn có thể giúp tôi không? Chúng ta cùng học nhé!'},
+    {id:12,zh:'昨天下雪了，天气很冷。今天下雨了，我不太舒服。北京的冬天很冷，经常下雪。昨天下了一场大雪，地上都是白的，很好看。但是天气太冷了，我都不想出门。今天早上起来，我觉得头疼、嗓子疼，好像感冒了。妈妈给我量体温，三十八度，发烧了。她叫我去医院看医生。医生给我开了药，叫我多喝水，好好休息。现在的天气真不好，一会儿冷一会儿热。你要注意身体，多穿衣服，别感冒了！',py:'Zuótiān xià xuě le, tiānqì hěn lěng. Jīntiān xià yǔ le, wǒ bú tài shūfu. Běijīng de dōngtiān hěn lěng, jīngcháng xià xuě. Zuótiān xià le yì chǎng dà xuě, dì shang dōu shì bái de, hěn hǎokàn. Dànshì tiānqì tài lěng le, wǒ dōu bù xiǎng chūmén. Jīntiān zǎoshang qǐlái, wǒ juéde tóuténg, sǎngzi téng, hǎoxiàng gǎnmào le. Māma gěi wǒ liáng tǐwēn, sānshíbā dù, fāshāo le. Tā jiào wǒ qù yīyuàn kàn yīshēng. Yīshēng gěi wǒ kāi le yào, jiào wǒ duō hē shuǐ, hǎohǎo xiūxi. Xiànzài de tiānqì zhēn bù hǎo, yíhuìr lěng yíhuìr rè. Nǐ yào zhùyì shēntǐ, duō chuān yīfu, bié gǎnmào le!',vi:'Hôm qua có tuyết rơi, thời tiết rất lạnh. Hôm nay mưa, tôi không được khỏe. Mùa đông ở Bắc Kinh rất lạnh, thường xuyên có tuyết. Hôm qua tuyết rơi một trận lớn, mặt đất trắng xóa, rất đẹp. Nhưng thời tiết lạnh quá, tôi không muốn ra ngoài. Sáng nay thức dậy, tôi thấy đau đầu, đau họng, hình như bị cảm rồi. Mẹ đo nhiệt độ cho tôi, 38 độ, sốt rồi. Bà bảo tôi đi bệnh viện khám. Bác sĩ kê thuốc cho tôi, dặn uống nhiều nước, nghỉ ngơi cho tốt. Thời tiết bây giờ thật tệ, lúc lạnh lúc nóng. Bạn phải chú ý sức khỏe, mặc nhiều áo, đừng để cảm nhé!'},
+    {id:13,zh:'请给我一杯茶。可以吗？谢谢！不客气。服务员，我要一杯绿茶，不加糖。好的，马上来。你的茶来了，请慢用。谢谢你！这茶多少钱？十五块钱一杯。好的，给你钱。你还要别的吗？我还想要一杯咖啡。你要热的还是冷的？热的吧，不加糖。一共多少钱？茶十五块，咖啡二十块，一共三十五块。给你五十。找你十五，谢谢光临！这家店的茶真好喝，下次我还来。',py:'Qǐng gěi wǒ yì bēi chá. Kěyǐ ma? Xièxie! Bú kèqi. Fúwùyuán, wǒ yào yì bēi lǜchá, bù jiā táng. Hǎo de, mǎshàng lái. Nǐ de chá lái le, qǐng màn yòng. Xièxie nǐ! Zhè chá duōshao qián? Shíwǔ kuài qián yì bēi. Hǎo de, gěi nǐ qián. Nǐ hái yào bié de ma? Wǒ hái xiǎng yào yì bēi kāfēi. Nǐ yào rè de háishì lěng de? Rè de ba, bù jiā táng. Yígòng duōshao qián? Chá shíwǔ kuài, kāfēi èrshí kuài, yígòng sānshíwǔ kuài. Gěi nǐ wǔshí. Zhǎo nǐ shíwǔ, xièxie guānglín! Zhè jiā diàn de chá zhēn hǎohē, xià cì wǒ hái lái.',vi:'Cho tôi một tách trà. Được không? Cảm ơn! Không có gì. Phục vụ ơi, tôi muốn một tách trà xanh, không đường. Vâng, đến ngay. Trà của bạn đây, xin từ từ dùng. Cảm ơn bạn! Trà này bao nhiêu tiền? 15 tệ một tách. Được, gửi bạn tiền. Bạn còn muốn gì nữa không? Tôi còn muốn một cốc cà phê. Bạn muốn nóng hay lạnh? Nóng đi, không đường. Tổng cộng bao nhiêu? Trà 15 tệ, cà phê 20 tệ, tổng 35 tệ. Gửi bạn 50. Trả lại bạn 15, cảm ơn đã ghé! Trà ở quán này ngon thật, lần sau tôi lại đến.'},
+    {id:14,zh:'我看了一个电影。他们都来了。不要说话！昨天我和朋友们去看了一部新电影，是一部动作片。电影很好看，很刺激、很精彩。我们买了票和爆米花，坐在第五排。电影院里人很多，差不多都坐满了。电影开始了，大家都安静了。可是有一个人在打电话，声音很大。我旁边的朋友说：不要说话！请安静！那个人听了以后说了声对不起，关掉了手机。看完电影，大家都说这部电影很不错。我们决定下次再一起来看电影。你喜欢看什么电影？',py:'Wǒ kàn le yí ge diànyǐng. Tāmen dōu lái le. Búyào shuōhuà! Zuótiān wǒ hé péngyoumen qù kàn le yí bù xīn diànyǐng, shì yí bù dòngzuò piàn. Diànyǐng hěn hǎokàn, hěn cìjī, hěn jīngcǎi. Wǒmen mǎi le piào hé bàomǐhuā, zuò zài dì wǔ pái. Diànyǐngyuàn lǐ rén hěn duō, chàbuduō dōu zuòmǎn le. Diànyǐng kāishǐ le, dàjiā dōu ānjìng le. Kěshì yǒu yí ge rén zài dǎ diànhuà, shēngyīn hěn dà. Wǒ pángbiān de péngyou shuō: búyào shuōhuà! Qǐng ānjìng! Nàge rén tīng le yǐhòu shuō le shēng duìbuqǐ, guāndiào le shǒujī. Kànwán diànyǐng, dàjiā dōu shuō zhè bù diànyǐng hěn búcuò. Wǒmen juédìng xià cì zài yìqǐ lái kàn diànyǐng. Nǐ xǐhuan kàn shénme diànyǐng?',vi:'Tôi đã xem một bộ phim. Họ đều đến rồi. Đừng nói chuyện! Hôm qua tôi và các bạn đi xem một bộ phim mới, là phim hành động. Phim rất hay, rất kịch tính, rất hấp dẫn. Chúng tôi mua vé và bỏng ngô, ngồi ở hàng thứ 5. Trong rạp rất đông người, gần như kín chỗ. Phim bắt đầu, mọi người đều yên lặng. Nhưng có một người đang gọi điện thoại, tiếng rất to. Bạn tôi ngồi cạnh nói: Đừng nói chuyện! Xin giữ yên lặng! Người đó nghe xong nói tiếng xin lỗi, tắt điện thoại. Xem xong phim, mọi người đều nói bộ phim này rất hay. Chúng tôi quyết định lần sau lại cùng đi xem phim. Bạn thích xem phim gì?'},
+    {id:15,zh:'我想再去一次中国。你爱你的家人吗？我很爱他们。我去过中国两次了，第一次去北京，第二次去上海。中国很大，每个城市都不一样。北京的名胜古迹很多，长城、故宫都很美。上海的楼很高，晚上灯光很好看。我还想去中国的西安、成都和广州看看。中国的美食也很多，我最喜欢吃北京烤鸭和四川火锅。我想带我的家人一起去中国旅行。他们一定会喜欢中国的！你爱你的家人吗？我很爱我的家人，他们是我最重要的人。',py:'Wǒ xiǎng zài qù yí cì Zhōngguó. Nǐ ài nǐ de jiārén ma? Wǒ hěn ài tāmen. Wǒ qùguo Zhōngguó liǎng cì le, dì yī cì qù Běijīng, dì èr cì qù Shànghǎi. Zhōngguó hěn dà, měi ge chéngshì dōu bù yíyàng. Běijīng de míngshèng gǔjī hěn duō, Chángchéng, Gùgōng dōu hěn měi. Shànghǎi de lóu hěn gāo, wǎnshang dēngguāng hěn hǎokàn. Wǒ hái xiǎng qù Zhōngguó de Xī\'ān, Chéngdū hé Guǎngzhōu kànkan. Zhōngguó de měishí yě hěn duō, wǒ zuì xǐhuan chī Běijīng kǎoyā hé Sìchuān huǒguō. Wǒ xiǎng dài wǒ de jiārén yìqǐ qù Zhōngguó lǚxíng. Tāmen yídìng huì xǐhuan Zhōngguó de! Nǐ ài nǐ de jiārén ma? Wǒ hěn ài wǒ de jiārén, tāmen shì wǒ zuì zhòngyào de rén.',vi:'Tôi muốn đi Trung Quốc thêm lần nữa. Bạn có yêu gia đình không? Tôi rất yêu họ. Tôi từng đi Trung Quốc 2 lần, lần 1 đi Bắc Kinh, lần 2 đi Thượng Hải. Trung Quốc rất rộng, mỗi thành phố đều khác nhau. Danh lam thắng cảnh ở Bắc Kinh rất nhiều, Vạn Lý Trường Thành, Cố Cung đều rất đẹp. Nhà ở Thượng Hải rất cao, buổi tối đèn rất đẹp. Tôi còn muốn đi Tây An, Thành Đô và Quảng Châu xem thử. Ẩm thực Trung Quốc cũng rất phong phú, tôi thích nhất là vịt quay Bắc Kinh và lẩu Tứ Xuyên. Tôi muốn đưa gia đình cùng đi Trung Quốc du lịch. Họ nhất định sẽ thích Trung Quốc! Bạn có yêu gia đình bạn không? Tôi rất yêu gia đình tôi, họ là những người quan trọng nhất đối với tôi.'},
   ],
   hsk2: [],
   hsk3: [],
 };
 
+function scoreReading(original, recognized){
+  try{
+    var normOrig=normalizeChinese(original);
+    var normRec=normalizeChinese(recognized);
+    var o=[...normOrig], r=[...normRec];
+    var chars=[], ri=0, correct=0;
+    for(var i=0;i<o.length;i++){
+      var matched=false;
+      if(ri<r.length&&o[i]===r[ri]){matched=true;ri++}
+      else{for(var j=ri;j<Math.min(ri+4,r.length);j++){if(o[i]===r[j]){matched=true;ri=j+1;break}}}
+      chars.push({char:o[i],match:matched});if(matched)correct++;
+    }
+    return{chars:chars,score:o.length?Math.round(correct/o.length*100):0,total:o.length,correct:correct,recognized:recognized};
+  }catch(e){console.error('scoreReading error:',e);return{chars:[],score:0,total:0,correct:0,recognized:recognized}}
+}
+
 function renderReadingPassage(lesson) {
-  var passages = READING_PASSAGES[state.level];
-  if (!passages || !passages.length) return '';
-  var p = null;
-  for (var i = 0; i < passages.length; i++) {
-    if (passages[i].id === lesson.id) { p = passages[i]; break; }
+  try{
+  var passages=READING_PASSAGES[state.level];
+  if(!passages||!passages.length){
+    return'<div class="reading-section"><div class="section-title">'+icon('file-text',20)+' Bài đọc hiểu</div><div class="reading-card"><div class="reading-zh" style="font-family:Noto Sans SC;font-size:18px;line-height:2">'+
+      lesson.words.map(function(w){return w.hanzi}).join(' ')+
+    '</div><div class="reading-vi" style="color:#94A3B8;font-size:13px">(Chưa có bài đọc cho cấp độ này)</div></div></div>';
   }
-  if (!p) return '';
-  return '<div class="reading-section">'+
-    '<div class="section-title">'+icon('file-text',20)+' Bài đọc hiểu</div>'+
+  var p=null;
+  for(var i=0;i<passages.length;i++){if(passages[i].id===lesson.id){p=passages[i];break}}
+  if(!p){
+    return'<div class="reading-section"><div class="section-title">'+icon('file-text',20)+' Bài đọc hiểu</div><div class="reading-card"><div class="reading-zh" style="font-family:Noto Sans SC;font-size:18px;line-height:2">'+
+      lesson.words.map(function(w){return w.hanzi}).join(' ')+
+    '</div><div class="reading-vi" style="color:#94A3B8;font-size:13px">(Bài #'+lesson.id+' chưa có nội dung đọc)</div></div></div>';
+  }
+  var rid='rd-py-'+lesson.id;
+  var readKey='rd-full-'+lesson.id;
+  var fb=state.speechResults[readKey];
+  var isRec=state.speechRec&&state.speechRec.contextKey===readKey&&state.speechRec.status==='recording';
+  var isLoading=state.speechProcessing===readKey;
+  var micIcon=isRec?'square':'mic';var micCls=isRec?'fc-mic-recording':'';
+  var pyHidden=state.rdPinyinHidden?'display:none':'';
+  var pyOpacity=state.rdPinyinHidden?'0.5':'1';
+  // Build colored text if feedback exists
+  var displayText;
+  if(fb&&fb.chars){
+    var origArr=[...p.zh];
+    var ci=0;
+    displayText=origArr.map(function(ch){
+      if(/[，。！？、；：""''【】《》（）\s]/.test(ch))return ch;
+      var m=ci<fb.chars.length?fb.chars[ci]:null;ci++;
+      return m&&!m.match?'<span style="color:#DC2626;border-bottom:2px solid #DC2626">'+ch+'</span>':ch;
+    }).join('');
+  }else{displayText=p.zh}
+  return'<div class="reading-section">'+
+    '<div class="section-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+icon('file-text',20)+' Bài đọc hiểu'+
+      '<button class="reading-speak-btn" data-speak="'+p.zh.replace(/"/g,'&quot;')+'" title="Phát âm toàn bài" style="border:none;background:var(--c-primary);color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer">'+icon('volume-2',16)+'</button>'+
+      '<button class="rd-mic-btn '+micCls+'" data-action="speech-record" data-speech-text="'+p.zh.replace(/"/g,'&quot;')+'" data-speech-key="'+readKey+'" title="'+(isRec?'Dừng ghi âm':'Đọc cả bài')+'" style="border:none;background:var(--c-primary);color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer">'+icon(micIcon,16)+'</button>'+
+      '<button class="reading-pinyin-toggle" data-action="toggle-rd-pinyin" title="Ẩn/hiện Pinyin" style="border:none;background:var(--c-primary);color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:700;opacity:'+pyOpacity+'">'+icon('eye',16)+'</button>'+
+    '</div>'+
+    (isLoading?'<div class="rd-loading-overlay"><div class="rd-loading-box"><span class="rd-loading-spinner">'+icon('loader-2',32)+'</span><div class="rd-loading-text">Đang chấm điểm...</div><div class="rd-loading-sub">AI đang phân tích phát âm của bạn</div></div></div>':'')+
     '<div class="reading-card">'+
-      '<div class="reading-zh">'+p.zh+'</div>'+
-      '<div class="reading-py">'+p.py+'</div>'+
+      '<div class="reading-zh" style="line-height:2.2;font-family:Noto Sans SC,sans-serif;font-size:20px">'+displayText+'</div>'+
+      '<div class="reading-py" id="'+rid+'" style="'+pyHidden+'">'+p.py+'</div>'+
       '<div class="reading-vi">'+p.vi+'</div>'+
+      (fb?'<div style="margin-top:12px;padding:10px 16px;border-radius:10px;background:'+(fb.score>=90?'#F0FDF4':fb.score>=60?'#FFF7ED':'#FEF2F2')+';font-size:14px;font-weight:600;color:'+(fb.score>=90?'#16A34A':fb.score>=60?'#F97316':'#DC2626')+';display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span>'+icon(fb.score>=90?'check-circle':fb.score>=60?'alert-circle':'x-circle',16)+' Kết quả: <strong>'+fb.correct+'/'+fb.total+'</strong> ký tự đúng (<strong>'+fb.score+'%</strong>)'+(fb.score<100?' — Nhận diện: "'+fb.recognized+'"':'')+'</span><button class="rd-retry-btn" data-action="reading-retry" data-speech-text="'+p.zh.replace(/"/g,'&quot;')+'" data-speech-key="'+readKey+'" style="margin-left:auto;border:none;background:var(--c-primary);color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600">'+icon('refresh-cw',14)+' Đọc lại</button></div>':'')+
     '</div>'+
   '</div>';
+  }catch(e){console.error('renderReadingPassage error:',e);return'<div class="reading-section"><div class="section-title">'+icon('file-text',20)+' Bài đọc hiểu <span style="color:#DC2626;font-size:13px">(lỗi hiển thị)</span></div></div>'}
 }
 
 function renderLessonQuiz(lesson, mode){
@@ -1469,6 +1619,13 @@ function renderWordList(lesson){
 }
 
 // Enrich lesson words with hv + ex from _ALL arrays
+function showToast(msg,type){
+  var t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;pointer-events:none;transition:all .3s ease;opacity:0;box-shadow:0 4px 20px rgba(0,0,0,.15)';document.body.appendChild(t)}
+  t.style.opacity='1';t.style.background=type==='success'?'#16A34A':type==='error'?'#DC2626':'#2563EB';t.style.color='#fff';t.textContent=msg;
+  clearTimeout(t._tid);t._tid=setTimeout(function(){t.style.opacity='0'},2000);
+}
+
 function enrichWord(w){
   if(w.hv&&w.ex)return w;
   var pool=(typeof HSK1_ALL!=='undefined'?HSK1_ALL:[]).concat(typeof HSK2_ALL!=='undefined'?HSK2_ALL:[]).concat(typeof HSK3_ALL!=='undefined'?HSK3_ALL:[]);
@@ -1490,13 +1647,17 @@ function renderFCOnePage(){
   const learned=isWordLearned(h);
   const total=state.fcShuffled.length;
   const pct=Math.round((state.fcIndex+1)/total*100);
+  var sr=state.speechResults[h];var isRec=state.speechRec&&state.speechRec.contextKey===h&&state.speechRec.status==='recording';
+  var micIcon=isRec?'square':'mic';var micCls=isRec?'fc-mic-recording':'';
 
   return '<div class="fc-one-page">'+
     '<button class="rv-close-btn" data-action="review-close" title="Thoát">'+icon('x',18)+'</button>'+
     '<div class="fc-progress-bar"><div class="fc-progress-fill" style="width:'+pct+'%"></div></div>'+
     '<div class="fc-progress-text">'+(state.fcIndex+1)+' / '+total+'</div>'+
     '<div class="fc-card">'+
-      '<div class="fc-hanzi-lg">'+h+'</div>'+
+      '<div class="fc-hanzi-lg" style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap">'+h+
+        (sr!=null?'<span style="font-size:14px;font-weight:600;color:'+(sr.match?'#16A34A':'#DC2626')+';background:'+(sr.match?'#16A34A15':'#DC262615')+';padding:2px 10px;border-radius:20px">'+(sr.match?'100đ — Đọc chuẩn!':'Thử lại')+'</span>':'')+
+      '</div>'+
       '<div class="fc-pinyin-row">'+
         '<span class="fc-pinyin-lg">'+p+'</span>'+
         (hv?'<span class="fc-hv">'+hv+'</span>':'')+
@@ -1506,6 +1667,9 @@ function renderFCOnePage(){
       '<div class="fc-action-row">'+
         '<button class="fc-action-btn" data-speak="'+h+'" onclick="event.stopPropagation()">'+icon('volume-2',18)+' Phát âm</button>'+
         '<button class="fc-action-btn" data-action="toggle-stroke" onclick="event.stopPropagation()">'+icon('pen-line',18)+' Xem cách viết</button>'+
+        '<button class="fc-action-btn fc-mic-btn '+micCls+'" data-action="speech-record" data-speech-text="'+h+'" data-speech-key="'+h+'" onclick="event.stopPropagation()">'+icon(micIcon,18)+' '+(isRec?'Dừng':'Đọc')+'</button>'+
+        '<button class="fc-learn-btn '+(learned?'learned':'')+'" data-action="mark-learned" title="'+(learned?'Đã thuộc':'Đánh dấu đã thuộc')+'">'+icon(learned?'check-circle':'check',18)+'</button>'+
+        '<button class="fc-learn-btn unlearned" data-action="mark-unlearned" title="Chưa thuộc">'+icon('x-circle',18)+'</button>'+
       '</div>'+
       '<div class="fc-stroke-container" style="display:none"></div>'+
       (ex?'<div class="fc-example"><div class="fc-ex-label">'+icon('book-open',14)+' Ví dụ:</div><div class="fc-ex-text">'+ex+'</div></div>':'')+
@@ -1513,10 +1677,6 @@ function renderFCOnePage(){
     '<div class="fc-nav-row">'+
       '<button class="fc-btn prev" data-action="fc-prev" '+(state.fcIndex===0?'disabled':'')+'>'+icon('arrow-left',14)+' Trước</button>'+
       '<button class="fc-btn next" data-action="fc-next" '+(state.fcIndex>=total-1?'disabled':'')+'>Tiếp '+icon('arrow-right',14)+'</button>'+
-    '</div>'+
-    '<div class="fc-learn-btns">'+
-      '<button class="fc-learn-btn '+(learned?'learned':'')+'" data-action="mark-learned" title="'+(learned?'Đã thuộc':'Đánh dấu đã thuộc')+'">'+icon(learned?'check-circle':'check',20)+'</button>'+
-      '<button class="fc-learn-btn unlearned" data-action="mark-unlearned" title="Chưa thuộc">'+icon('x-circle',20)+'</button>'+
     '</div>'+
     // Always show review link
     '<div class="fc-review-link"><button class="fc-done-btn" data-action="go-review">'+icon('rotate-cw',16)+' Sang Ôn tập luyện thêm</button></div>'+
@@ -1601,17 +1761,25 @@ function renderSRSDashboard(){
 function renderReviewDashboard(){
   var learned=getLearnedWords().length;
   var lv=state._reviewLevel||'hsk1';
-  var pool=lv==='hsk1'?HSK1_ALL:lv==='hsk2'?HSK2_ALL:HSK3_ALL;
+  var pool;
+  if(lv==='hsk1')pool=HSK1_ALL;
+  else if(lv==='hsk2')pool=HSK2_ALL;
+  else if(lv==='hsk3')pool=HSK3_ALL;
+  else if(lv==='hsk4')pool=typeof HSK4_ALL!=='undefined'?HSK4_ALL:[];
+  else if(lv==='hsk5')pool=typeof HSK5_ALL!=='undefined'?HSK5_ALL:[];
+  else if(lv==='hsk6')pool=typeof HSK6_ALL!=='undefined'?HSK6_ALL:[];
+  else if(lv==='hsk79')pool=typeof HSK79_ALL!=='undefined'?HSK79_ALL:[];
+  else pool=HSK1_ALL||[];
   if(!pool)pool=HSK1_ALL||[];
   var total=pool.length;
   var todayCount=Math.min(30,total);
 
-  // Level selector — single horizontal row
-  var levels=[{id:'hsk1',label:'HSK 1'},{id:'hsk2',label:'HSK 2'},{id:'hsk3',label:'HSK 3'}];
+  // Level selector — all levels with lock
+  var levels=[{id:'hsk1',label:'HSK 1'},{id:'hsk2',label:'HSK 2'},{id:'hsk3',label:'HSK 3'},{id:'hsk4',label:'HSK 4'},{id:'hsk5',label:'HSK 5'},{id:'hsk6',label:'HSK 6'},{id:'hsk79',label:'HSK 7-9'}];
   var lvHtml=levels.map(function(l){
     var locked=isLevelLocked(l.id);
     var cls='rv-lv-btn'+(lv===l.id?' active':'')+(locked?' locked':'');
-    return '<button class="'+cls+'" data-review-lv="'+l.id+'" '+(locked?'disabled':'')+'>'+l.label+(locked?' 🔒':'')+'</button>';
+    return '<button class="'+cls+'" data-review-lv="'+l.id+'" '+(locked?'disabled':'')+'>'+l.label+(locked?' '+icon('lock',12):'')+'</button>';
   }).join('');
 
   // Exercise mode cards
@@ -1623,7 +1791,7 @@ function renderReviewDashboard(){
     {id:'writing',icon:icon('pen-line',22),title:'Luyện viết',desc:'Luyện viết câu tiếng Trung',color:'#DC2626'},
   ];
   var modeHtml=modes.map(function(m){
-    return '<div class="rv-mode-card" data-action="review-start-mode" data-mode="'+m.id+'" style="--mode-color:'+m.color+'"><div class="rv-mode-icon" style="color:'+m.color+'">'+m.icon+'</div><div class="rv-mode-info"><div class="rv-mode-title">'+m.title+'</div><div class="rv-mode-desc">'+m.desc+'</div></div><div class="rv-mode-arrow">→</div></div>';
+    return '<div class="rv-mode-card" data-action="review-start-mode" data-mode="'+m.id+'" style="--mode-color:'+m.color+'"><div class="rv-mode-icon">'+m.icon+'</div><div class="rv-mode-title">'+m.title+'</div><div class="rv-mode-desc">'+m.desc+'</div></div>';
   }).join('');
 
   return '<div class="fade-in">'+
@@ -1692,7 +1860,7 @@ function renderDictionary(){
     if(search) words=words.filter(function(w){return(w.hanzi||'').indexOf(search)>=0||(w.pinyin||'').toLowerCase().indexOf(search)>=0||(w.vi||'').toLowerCase().indexOf(search)>=0||(w.hv||'').toLowerCase().indexOf(search)>=0});
     var expanded=state._dictExpanded===g.id;
     var items=expanded&&words.length?words.slice(0,50).map(function(w){
-      return '<div class="word-item"><div class="word-hanzi">'+(w.hanzi||w.h||'')+'</div><div class="word-info"><div class="word-pinyin">'+(w.pinyin||w.p||'')+' <span style="font-size:11px;color:var(--c-text-dim)">'+(w.hv||'')+'</span></div><div class="word-meaning">'+(w.vi||'')+'</div>'+(w.ex?'<div style="font-size:11px;color:var(--c-text-dim);margin-top:2px">'+w.ex+'</div>':'')+'</div></div>';
+      return '<div class="word-item dict-word-item"><div class="word-hanzi">'+(w.hanzi||w.h||'')+'</div><div class="word-info"><div class="word-pinyin">'+(w.pinyin||w.p||'')+' <span style="font-size:11px;color:var(--c-text-dim)">'+(w.hv||'')+'</span></div><div class="word-meaning">'+(w.vi||'')+'</div>'+(w.ex?'<div style="font-size:11px;color:var(--c-text-dim);margin-top:2px">'+w.ex+'</div>':'')+'</div></div>';
     }).join(''):'';
     html+='<div class="dict-group"><div class="dict-group-header" data-dict-expand="'+g.id+'">'+icon(expanded?'arrow-left':'arrow-right',14)+' '+g.label+' <small>('+words.length+' từ)</small></div>'+(expanded?'<div class="dict-group-body">'+items+'</div>':'')+'</div>';
   });
@@ -1741,7 +1909,13 @@ function renderProfile(){
   if(typeof HSK1_ALL!=='undefined')totalWords+=HSK1_ALL.length;
   if(typeof HSK2_ALL!=='undefined')totalWords+=HSK2_ALL.length;
   if(typeof HSK3_ALL!=='undefined')totalWords+=HSK3_ALL.length;
-  return '<div class="fade-in" style="padding:24px"><div style="text-align:center;margin-bottom:24px"><img src="'+m.avatar_url+'" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--c-primary)"><h2 style="margin:12px 0 4px">'+m.full_name+'</h2><p style="color:var(--c-text-secondary)">'+u.email+'</p></div><div class="profile-stats-grid"><div class="profile-stat-card"><div class="profile-stat-num">'+state.wordsLearned+'</div><div class="profile-stat-label">Từ đã thuộc</div></div><div class="profile-stat-card"><div class="profile-stat-num">0</div><div class="profile-stat-label">Bài đã hoàn thành</div></div><div class="profile-stat-card"><div class="profile-stat-num">'+streak+'</div><div class="profile-stat-label">Ngày liên tiếp</div></div></div><div class="profile-menu">'+
+  return '<div class="fade-in" style="padding:24px"><div style="text-align:center;margin-bottom:24px"><img src="'+m.avatar_url+'" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--c-primary)"><h2 style="margin:12px 0 4px">'+m.full_name+'</h2><p style="color:var(--c-text-secondary)">'+u.email+'</p></div>'+
+    '<div class="vip-banner" data-action="open-vip" style="margin-bottom:20px">'+
+      '<span class="vip-banner-icon">'+icon('crown',28)+'</span>'+
+      '<div class="vip-banner-text"><strong>NÂNG CẤP TÀI KHOẢN VIP</strong><br><span>Mở khóa toàn bộ HSK 3-9 · AI chấm bài · Không giới hạn</span></div>'+
+      '<span class="vip-banner-arrow">'+icon('arrow-right',20)+'</span>'+
+    '</div>'+
+    '<div class="profile-stats-grid"><div class="profile-stat-card"><div class="profile-stat-num">'+getLearnedWords().length+'</div><div class="profile-stat-label">Từ đã thuộc</div></div><div class="profile-stat-card"><div class="profile-stat-num">0</div><div class="profile-stat-label">Bài đã hoàn thành</div></div><div class="profile-stat-card"><div class="profile-stat-num">'+(parseInt(localStorage.getItem('subhsk_streak')||'0'))+'</div><div class="profile-stat-label">Ngày liên tiếp</div></div></div><div class="profile-menu">'+
     '<div class="profile-menu-item" data-action="go-review">'+icon('rotate-cw',18)+' Ôn tập thông minh</div>'+
     '<div class="profile-menu-item" data-action="open-vip">'+icon('crown',18)+' Nâng cấp VIP</div>'+
     '<div class="profile-menu-item" data-action="tab-grammar">'+icon('book-open',18)+' Ngữ pháp</div>'+
@@ -1864,10 +2038,10 @@ function attachEvents(){
   });
   // Flashcard learn/unlearn buttons
   document.querySelectorAll('[data-action="mark-learned"]').forEach(function(b){
-    b.onclick=function(e){e.stopPropagation();var w=state.fcShuffled[state.fcIndex];if(w){markLearned(w.hanzi);render()}};
+    b.onclick=function(e){e.stopPropagation();var w=state.fcShuffled[state.fcIndex];if(w){var h=w.hanzi||w.h||'';markLearned(h);showToast('✅ Đã đánh dấu thuộc: '+h,'success');setTimeout(function(){render()},400)}};
   });
   document.querySelectorAll('[data-action="mark-unlearned"]').forEach(function(b){
-    b.onclick=function(e){e.stopPropagation();var w=state.fcShuffled[state.fcIndex];if(w){markUnlearned(w.hanzi);render()}};
+    b.onclick=function(e){e.stopPropagation();var w=state.fcShuffled[state.fcIndex];if(w){var h=w.hanzi||w.h||'';markUnlearned(h);showToast('🔄 Đã bỏ đánh dấu: '+h,'info');setTimeout(function(){render()},400)}};
   });
   // Toggle stroke animation
   document.querySelectorAll('[data-action="toggle-stroke"]').forEach(function(b){
@@ -1898,7 +2072,7 @@ function attachEvents(){
     b.onclick=function(e){e.stopPropagation();state.tab='review';state._reviewLevel=state.level;state._reviewMode='flashcard';render();window.scrollTo({top:0})};
   });
   // ═══ GENERIC HANDLER (all data-action, including auth) ═══
-  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;console.log('[ACTION]',a,b.dataset.mode||'');if(a==='login'){sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});return}if(a==='logout'){sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();return}if(a==='toggle-user-menu'){state.showUserMenu=!state.showUserMenu;render();return}if(a==='profile'){state.tab='profile';state.showUserMenu=false;render();return}if(a==='tab-home'){state.tab='learn';state.view='home';render();window.scrollTo({top:0});return}if(a==='tab-review'){state.tab='review';state._reviewLevel=null;state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='tab-dict'){state.tab='dict';state._dictExpanded=null;render();window.scrollTo({top:0});return}if(a==='tab-grammar'){state.tab='grammar';render();window.scrollTo({top:0});return}if(a==='contact'){showToast('📧 Liên hệ: subhsk.chinese@gmail.com','info');return}if(a==='quick-review'){state.tab='review';state._reviewLevel=state.level||'hsk1';state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='scroll-top'){window.scrollTo({top:0,behavior:'smooth'});return}if(a==='open-vip'){showToast('👑 Nâng cấp VIP để mở khóa toàn bộ tính năng!','info');return}if(a==='go-review'){state.tab='review';state._reviewLevel=state.level;state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='go-review-hero'){state.tab='review';state._reviewLevel='hsk1';state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='review-start-mode'){state._reviewLevel=state._reviewLevel||'hsk1';state._reviewMode=b.dataset.mode;state.quizDone=false;var rvPool=state._reviewLevel==='hsk1'?HSK1_ALL:state._reviewLevel==='hsk2'?HSK2_ALL:HSK3_ALL;if(!rvPool||!rvPool.length){console.error('No word pool for level:',state._reviewLevel);rvPool=HSK1_ALL||[]}console.log('review-start-mode:',state._reviewMode,'pool:',rvPool.length);var rvWords=shuffle(rvPool.map(enrichWord)).slice(0,20);state.fcShuffled=rvWords;state.fcIndex=0;state.fcFlipped=false;if(state._reviewMode!=='flashcard'){try{generateSRQuiz(rvWords,state._reviewMode)}catch(e){console.error('generateSRQuiz error:',e.message)}}else state.quizQuestions=[];render();return}if(a==='review-close'){state.mode='flashcard';state._reviewMode=null;state._reviewLevel=null;state.fcShuffled=[];state.quizQuestions=[];state.quizDone=false;state.tab='learn';state.view='home';render();return}if(a==='start-writing'){state.mode='writing';state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingLoading=false;state.writingError=null;state.writingAiFeedback=null;render();return}if(a==='writing-quit'){state.mode='flashcard';state._reviewMode=null;state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingAiFeedback=null;state.fcShuffled=[];state.quizQuestions=[];render();return}if(a==='back'){state.view='level';render()}if(a==='back-home'){state.view='home';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='toggle-stroke'){var card2=b.closest('.fc-card');if(card2){var area2=card2.querySelector('.fc-stroke-container');if(area2){if(area2.style.display==='none'||!area2.style.display){area2.style.display='flex';area2.style.flexWrap='wrap';area2.style.gap='8px';area2.style.justifyContent='center';var w2=state.fcShuffled[state.fcIndex];if(w2&&area2.children.length===0&&typeof HanziWriter!=='undefined'){var chars=(w2.hanzi||w2.h||'').split('');chars.forEach(function(ch){var wrap=document.createElement('div');wrap.style.width='90px';wrap.style.height='90px';area2.appendChild(wrap);try{HanziWriter.create(wrap,ch,{width:90,height:90,padding:5,strokeAnimationSpeed:1,delayBetweenStrokes:200,strokeColor:'#2563EB',radicalColor:'#F97316',showOutline:true,showCharacter:false}).animateCharacter()}catch(ex){wrap.innerHTML='<span style="font-size:50px;font-family:var(--font-cn)">'+ch+'</span>'}})}}else{area2.style.display='none'}}}return}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words.map(enrichWord));state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
+  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;console.log('[ACTION]',a,b.dataset.mode||'');if(a==='login'){sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});return}if(a==='logout'){sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();return}if(a==='toggle-user-menu'){state.showUserMenu=!state.showUserMenu;render();return}if(a==='profile'){state.tab='profile';state.showUserMenu=false;render();return}if(a==='tab-home'){state.tab='learn';state.view='home';render();window.scrollTo({top:0});return}if(a==='tab-review'){state.tab='review';state._reviewLevel=null;state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='tab-dict'){state.tab='dict';state._dictExpanded=null;render();window.scrollTo({top:0});return}if(a==='tab-grammar'){state.tab='grammar';render();window.scrollTo({top:0});return}if(a==='contact'){showToast('📧 Liên hệ: subhsk.chinese@gmail.com','info');return}if(a==='quick-review'){state.tab='review';state._reviewLevel=state.level||'hsk1';state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='scroll-top'){window.scrollTo({top:0,behavior:'smooth'});return}if(a==='open-vip'){showToast('👑 Nâng cấp VIP để mở khóa toàn bộ tính năng!','info');return}if(a==='go-review'){state.tab='review';state._reviewLevel=state.level;state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='go-review-hero'){state.tab='review';state._reviewLevel='hsk1';state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='review-start-mode'){state._reviewLevel=state._reviewLevel||'hsk1';state._reviewMode=b.dataset.mode;state.quizDone=false;var rvPool;var rl=state._reviewLevel;if(rl==='hsk1')rvPool=HSK1_ALL;else if(rl==='hsk2')rvPool=HSK2_ALL;else if(rl==='hsk3')rvPool=HSK3_ALL;else if(rl==='hsk4')rvPool=typeof HSK4_ALL!=='undefined'?HSK4_ALL:[];else if(rl==='hsk5')rvPool=typeof HSK5_ALL!=='undefined'?HSK5_ALL:[];else if(rl==='hsk6')rvPool=typeof HSK6_ALL!=='undefined'?HSK6_ALL:[];else if(rl==='hsk79')rvPool=typeof HSK79_ALL!=='undefined'?HSK79_ALL:[];else rvPool=HSK1_ALL||[];if(!rvPool||!rvPool.length){console.error('No word pool for level:',state._reviewLevel);rvPool=HSK1_ALL||[]}console.log('review-start-mode:',state._reviewMode,'pool:',rvPool.length);var rvWords=shuffle(rvPool.map(enrichWord)).slice(0,20);state.fcShuffled=rvWords;state.fcIndex=0;state.fcFlipped=false;if(state._reviewMode!=='flashcard'){try{generateSRQuiz(rvWords,state._reviewMode)}catch(e){console.error('generateSRQuiz error:',e.message)}}else state.quizQuestions=[];render();return}if(a==='review-close'){state.mode='flashcard';state._reviewMode=null;state._reviewLevel=null;state.fcShuffled=[];state.quizQuestions=[];state.quizDone=false;state.tab='learn';state.view='home';render();return}if(a==='start-writing'){state.mode='writing';state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingLoading=false;state.writingError=null;state.writingAiFeedback=null;render();return}if(a==='writing-quit'){state.mode='flashcard';state._reviewMode=null;state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingAiFeedback=null;state.fcShuffled=[];state.quizQuestions=[];render();return}if(a==='back'){state.view='level';render()}if(a==='back-home'){state.view='home';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='toggle-stroke'){var card2=b.closest('.fc-card');if(card2){var area2=card2.querySelector('.fc-stroke-container');if(area2){if(area2.style.display==='none'||!area2.style.display){area2.style.display='flex';area2.style.flexWrap='wrap';area2.style.gap='8px';area2.style.justifyContent='center';var w2=state.fcShuffled[state.fcIndex];if(w2&&area2.children.length===0&&typeof HanziWriter!=='undefined'){var chars=(w2.hanzi||w2.h||'').split('');chars.forEach(function(ch){var wrap=document.createElement('div');wrap.style.width='90px';wrap.style.height='90px';area2.appendChild(wrap);try{HanziWriter.create(wrap,ch,{width:90,height:90,padding:5,strokeAnimationSpeed:1,delayBetweenStrokes:200,strokeColor:'#2563EB',radicalColor:'#F97316',showOutline:true,showCharacter:false}).animateCharacter()}catch(ex){wrap.innerHTML='<span style="font-size:50px;font-family:var(--font-cn)">'+ch+'</span>'}})}}else{area2.style.display='none'}}}return}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words.map(enrichWord));state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
   document.querySelectorAll('[data-mode]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.mode;if(state.mode==='flashcard')state.fcShuffled=[];if(state.mode==='quiz')state.quizQuestions=[];render()}});
   document.querySelectorAll('[data-hsk79set]').forEach(c=>{c.onclick=()=>{state.view='hsk79set';state.lessonId=parseInt(c.dataset.hsk79set);state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
   document.querySelectorAll('[data-m79]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.m79;state.fcShuffled=[];state.quizQuestions=[];render()}});
@@ -1974,7 +2148,7 @@ function attachEvents(){
       if(submitBtn) submitBtn.disabled = !allFilled;
     });
   });
-  document.querySelectorAll('.word-item').forEach(el=>{
+  document.querySelectorAll('.word-item:not(.dict-word-item)').forEach(el=>{
     el.addEventListener('click',function(e){
       if(e.target.closest('.audio-btn')||e.target.closest('.stroke-play'))return;
       const hanzi=el.querySelector('.word-hanzi');
@@ -1982,6 +2156,24 @@ function attachEvents(){
     });
   });
   document.querySelectorAll('[data-speak]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();speak(b.dataset.speak)}});
+  // Speech recognition buttons
+  document.querySelectorAll('[data-action="speech-record"]').forEach(function(b){
+    b.onclick=function(e){e.stopPropagation();
+      var text=b.dataset.speechText,key=b.dataset.speechKey;
+      if(state.speechRec&&state.speechRec.contextKey===key&&state.speechRec.status==='recording'){stopSpeechRecognition()}
+      else{startSpeechRecognition(text,key)}
+    };
+  });
+  document.querySelectorAll('[data-action="toggle-rd-pinyin"]').forEach(function(b){
+    b.onclick=function(e){e.stopPropagation();state.rdPinyinHidden=!state.rdPinyinHidden;render()};
+  });
+  document.querySelectorAll('[data-action="reading-retry"]').forEach(function(b){
+    b.onclick=function(e){e.stopPropagation();
+      var key=b.dataset.speechKey,text=b.dataset.speechText;
+      delete state.speechResults[key];state.speechProcessing=null;render();
+      setTimeout(function(){startSpeechRecognition(text,key)},200);
+    };
+  });
   document.querySelectorAll('[data-quiz-opt]').forEach(b=>{b.onclick=()=>{if(state.quizAnswered)return;const i=parseInt(b.dataset.quizOpt);const q=state.quizQuestions[state.quizIndex];q.sel=i;state.quizAnswered=true;if(i===q.ci)state.quizScore++;render();setTimeout(()=>{if(state.quizIndex<state.quizQuestions.length-1){state.quizIndex++;state.quizAnswered=false;render()}else{state.quizDone=true;render()}},1200)}});
 }
 
