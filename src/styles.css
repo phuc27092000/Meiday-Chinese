@@ -1492,6 +1492,17 @@ body {
 .writing-sentence-vi {
   font-size: 15px; font-weight: 500;
   color: var(--c-text); line-height: 1.5;
+  flex: 1;
+}
+.writing-score {
+  font-size: 13px; font-weight: 700;
+  padding: 3px 10px; border-radius: var(--radius-pill);
+  background: #EFF6FF; color: var(--c-primary);
+  flex-shrink: 0;
+}
+.writing-comment {
+  font-size: 13px; color: var(--c-sub); margin-top: 6px;
+  font-style: italic;
 }
 .writing-textarea {
   width: 100%;
