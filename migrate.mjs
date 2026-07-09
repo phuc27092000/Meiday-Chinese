@@ -35,6 +35,130 @@ ALTER TABLE grammar_points ENABLE ROW LEVEL SECURITY;
 DO $$ BEGIN CREATE POLICY pub_read_words ON words FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE POLICY pub_read_lessons ON lessons FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE POLICY pub_read_grammar ON grammar_points FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- ═══ PERSONALIZATION TABLES ═══
+
+CREATE TABLE IF NOT EXISTS user_profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
+  display_name TEXT DEFAULT '',
+  avatar_url TEXT DEFAULT '',
+  is_vip BOOLEAN DEFAULT FALSE,
+  preferences JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  CREATE POLICY users_read_own_profile ON user_profiles FOR SELECT USING (auth.uid() = id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY users_insert_own_profile ON user_profiles FOR INSERT WITH CHECK (auth.uid() = id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY users_update_own_profile ON user_profiles FOR UPDATE USING (auth.uid() = id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS user_word_progress (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  hanzi TEXT NOT NULL,
+  mastery TEXT DEFAULT 'learning' CHECK (mastery IN ('learning','learned','mastered')),
+  hsk_level SMALLINT,
+  learned_at TIMESTAMPTZ DEFAULT NOW(),
+  last_reviewed_at TIMESTAMPTZ,
+  review_count SMALLINT DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, hanzi)
+);
+CREATE INDEX IF NOT EXISTS idx_uwp_user ON user_word_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_uwp_hanzi ON user_word_progress(hanzi);
+ALTER TABLE user_word_progress ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  CREATE POLICY users_manage_own_words ON user_word_progress FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS user_daily_activity (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  activity_date DATE NOT NULL,
+  words_studied INTEGER DEFAULT 0,
+  study_minutes INTEGER DEFAULT 0,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, activity_date)
+);
+CREATE INDEX IF NOT EXISTS idx_uda_user_date ON user_daily_activity(user_id, activity_date);
+ALTER TABLE user_daily_activity ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  CREATE POLICY users_manage_own_activity ON user_daily_activity FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS user_quiz_results (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  hsk_level SMALLINT,
+  quiz_mode TEXT DEFAULT 'quiz',
+  score INTEGER DEFAULT 0,
+  total INTEGER DEFAULT 0,
+  percentage INTEGER DEFAULT 0,
+  wrong_words JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_uqr_user ON user_quiz_results(user_id);
+ALTER TABLE user_quiz_results ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  CREATE POLICY users_manage_own_quizzes ON user_quiz_results FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS user_writing_practice (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  hsk_level SMALLINT,
+  sub_mode TEXT DEFAULT 'short',
+  sentences JSONB DEFAULT '[]'::jsonb,
+  user_inputs JSONB DEFAULT '{}'::jsonb,
+  feedback JSONB,
+  score INTEGER,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_uwp_user ON user_writing_practice(user_id);
+ALTER TABLE user_writing_practice ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  CREATE POLICY users_manage_own_writing ON user_writing_practice FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS user_pronunciation_results (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  hsk_level SMALLINT,
+  context_key TEXT DEFAULT '',
+  text TEXT DEFAULT '',
+  recognized TEXT DEFAULT '',
+  score INTEGER DEFAULT 0,
+  total_chars INTEGER DEFAULT 0,
+  correct_chars INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_upr_user ON user_pronunciation_results(user_id);
+ALTER TABLE user_pronunciation_results ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  CREATE POLICY users_manage_own_pronunciation ON user_pronunciation_results FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS user_bookmarks (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  item_type TEXT NOT NULL CHECK (item_type IN ('word','grammar','lesson')),
+  item_key TEXT NOT NULL,
+  item_data JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, item_type, item_key)
+);
+CREATE INDEX IF NOT EXISTS idx_ub_user ON user_bookmarks(user_id);
+ALTER TABLE user_bookmarks ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  CREATE POLICY users_manage_own_bookmarks ON user_bookmarks FOR ALL USING (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 `;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

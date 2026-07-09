@@ -1,31 +1,88 @@
 # SubHSK Chinese — Project Documentation
 
 > **Last updated:** 2026-07-09  
-> **Version:** 0.1.0  
-> **Purpose:** Vietnamese-language Chinese learning SPA covering HSK 1-9 vocabulary, grammar, flashcards, quizzes, reading comprehension, AI writing practice, and speech pronunciation.
+> **Version:** 0.2.0  
+> **Purpose:** Vietnamese-language Chinese learning SPA covering HSK 1-9 vocabulary, grammar, flashcards, quizzes, reading comprehension, AI writing practice, and speech pronunciation. **Fully personalized with Supabase cloud sync.**
 
 ---
 
 ## 📁 Project Structure
 
 ```
-Meiday-Chinese/
-├── index.html          # Main SPA (~2032 lines) — all JS logic, rendering, event handlers
+SubHSK-Chinese/
+├── index.html          # Main SPA — all JS logic, rendering, event handlers
 ├── src/
-│   ├── data.js         # HSK vocabulary data (~11,109 lines) — HSK1-9 word lists
-│   ├── styles.css      # All styling (~2,703 lines) — animations, responsive layout
-│   └── main.js         # Legacy UI logic (stroke animation helpers)
+│   ├── data.js         # HSK vocabulary data — HSK1-9 word lists
+│   ├── styles.css      # All styling — animations, responsive layout
+│   ├── main.js         # Legacy UI logic (stroke animation helpers)
+│   ├── api.js          # Supabase REST API for vocab/grammar data fetch
+│   └── personalization.js  # 🆕 Personalized Supabase operations (user data sync)
 ├── package.json        # Vite 5 + pg dependency
 ├── vite.config.ts      # Vite config: host 0.0.0.0, port 5173
 ├── .env                # Supabase URL/keys + DeepSeek API key
-├── migrate.mjs         # Database migration script
+├── migrate.mjs         # Database migration script (all tables)
 ├── dist/               # Build output
 └── README.md
 ```
 
-**Architecture:** Single-file SPA — `index.html` contains ALL rendering functions (`render*()`), event handlers (`attachEvents()`), state management, and API integrations. `src/data.js` exports HSK vocabulary arrays. `src/styles.css` contains all styling.
+**Architecture:** Single-file SPA — `index.html` contains ALL rendering functions (`render*()`), event handlers (`attachEvents()`), state management, and API integrations. `src/data.js` exports HSK vocabulary arrays. `src/styles.css` contains all styling. 🆕 `src/personalization.js` handles all per-user cloud operations.
 
 **Build:** `npx vite build` → outputs to `dist/` (index.html ~0.78KB, JS ~1.5MB, CSS ~81KB). Dev server: `npx vite` on port 5173.
+
+**Database:** Supabase PostgreSQL at `db.gpmwzeurcwfiyxlomqsa.supabase.co:5432`. Connection via `migrate.mjs` for schema management and `personalization.js` for user data CRUD.
+
+---
+
+## 🆕 Personalization System (v0.2.0)
+
+All user data is now persisted to Supabase PostgreSQL, making the app fully personalized and portable across devices.
+
+### Database Tables (New)
+
+| Table | Purpose | Key Columns |
+|-------|---------|-------------|
+| `user_profiles` | User profile & VIP status | `id (UUID PK)`, `display_name`, `avatar_url`, `is_vip`, `preferences (JSONB)` |
+| `user_word_progress` | Per-word learning progress | `user_id`, `hanzi`, `mastery`, `hsk_level`, `learned_at`, `review_count` |
+| `user_daily_activity` | Daily study tracking & streaks | `user_id`, `activity_date`, `words_studied`, `study_minutes` |
+| `user_quiz_results` | Quiz/exam history | `user_id`, `hsk_level`, `quiz_mode`, `score`, `total`, `percentage`, `wrong_words (JSONB)` |
+| `user_writing_practice` | AI writing practice history | `user_id`, `hsk_level`, `sub_mode`, `sentences (JSONB)`, `user_inputs (JSONB)`, `feedback (JSONB)`, `score` |
+| `user_pronunciation_results` | Speech pronunciation history | `user_id`, `hsk_level`, `context_key`, `text`, `recognized`, `score`, `total_chars`, `correct_chars` |
+| `user_bookmarks` | Favorite words/grammar | `user_id`, `item_type`, `item_key`, `item_data (JSONB)` |
+
+All tables have **Row Level Security (RLS)** enabled — users can only access their own data.
+
+### src/personalization.js — Module API
+
+| Export | Description |
+|--------|-------------|
+| `getUserProfile()` | Fetch user profile from Supabase |
+| `upsertUserProfile(profile)` | Create/update user profile |
+| `getLearnedWordsFromCloud()` | Get all learned words from cloud |
+| `markWordLearnedCloud(hanzi, hskLevel)` | Mark a word as learned in cloud |
+| `markWordUnlearnedCloud(hanzi)` | Remove a word from cloud |
+| `syncLocalLearnedToCloud()` | Sync localStorage learned words → Supabase |
+| `getUserStats()` | Get comprehensive user stats (learned count, streak, today, avg score) |
+| `logDailyActivity(wordsStudied, studyMinutes)` | Log daily study activity |
+| `saveQuizResult(result)` | Save quiz result to history |
+| `getQuizHistory(limit)` | Get recent quiz results |
+| `saveWritingPractice(data)` | Save writing practice session |
+| `getWritingHistory(limit)` | Get recent writing sessions |
+| `savePronunciationResult(result)` | Save pronunciation test result |
+| `toggleBookmark(type, itemKey, itemData)` | Toggle bookmark on/off |
+| `getBookmarks(type)` | Get bookmarks by type |
+| `isBookmarked(type, itemKey)` | Check if item is bookmarked |
+| `trackSessionWord()` | Increment session word counter |
+| `endStudySession()` | Save session stats to daily activity |
+
+### Data Flow
+
+1. **Login:** Google OAuth → Supabase creates `auth.users` row → `onAuthStateChange` triggers → creates `user_profiles` row → syncs `localStorage` learned words → loads cloud stats
+2. **Mark Learned:** `markLearned(hanzi)` → updates `localStorage` + calls `markWordLearnedCloud()` → Supabase `user_word_progress`
+3. **Quiz Complete:** Saves score, wrong words to `user_quiz_results` + logs daily activity
+4. **Writing Submit:** Saves full writing session (sentences, inputs, AI feedback) to `user_writing_practice`
+5. **Pronunciation:** Each speech test saves to `user_pronunciation_results`
+6. **Profile:** Loads stats from `getUserStats()` → shows real-time cloud data with quiz history
+7. **Session Tracking:** `trackSessionWord()` counts words studied; `endStudySession()` saves to `user_daily_activity`
 
 ---
 
@@ -60,12 +117,18 @@ Centralized in `index.html` as `let state = {...}`. Key properties:
 | `speechResults` | object | {} | Pronunciation results keyed by contextKey |
 | `speechProcessing` | string | null | ContextKey being processed (loading overlay) |
 | `rdPinyinHidden` | boolean | false | Reading pinyin toggle state |
+| `_cloudStats` | object | null | 🆕 Cached user stats from Supabase (`totalLearned`, `streak`, `todayStudied`, `quizCount`, `avgScore`) |
 
 ---
 
 ## 🔐 Auth & Lock System
 
 **Supabase Google OAuth** via `@supabase/supabase-js` v2 (CDN).
+
+🆕 **Auth State Listener** (`onAuthStateChange`):
+- On `SIGNED_IN`: creates/updates `user_profiles` row, syncs localStorage learned words to cloud, loads cloud stats
+- On `SIGNED_OUT`: clears all user state
+- On page load: checks existing session, restores user state + cloud stats
 
 **Lock tiers:**
 - **Guest (not logged in):** HSK 1 only
@@ -75,6 +138,15 @@ Centralized in `index.html` as `let state = {...}`. Key properties:
 Functions: `getMaxUnlockedLevel()`, `isLevelLocked(lv)`, `getLockMessage(lv)`, `getLockAction(lv)`.
 
 On home page, locked levels show card with lock message. Clicking triggers login or VIP upgrade prompt.
+
+🆕 **Profile Page** now shows:
+- Cloud-synced learned word count
+- Quiz history (last 5 results with scores)
+- Daily study stats (words studied today, streak)
+- Average quiz score
+- Total HSK vocabulary available
+- VIP badge (if VIP)
+- "Đồng bộ dữ liệu" button to refresh stats
 
 ---
 
@@ -254,3 +326,5 @@ npm run tunnel     # ngrok tunnel for testing
 5. **Web Speech API:** Only works on Chrome/Edge with HTTPS or localhost. Requires microphone permission.
 6. **DeepSeek API:** Requires `VITE_DEEPSEEK_KEY` in `.env`. Falls back to local data if unavailable.
 7. **No framework:** Pure vanilla JS SPA. All code in one HTML file. No React/Vue/Svelte.
+
+string để agent kết nối với db: postgresql://postgres:[kC3MG82y*D8RBS#]@db.gpmwzeurcwfiyxlomqsa.supabase.co:5432/postgres

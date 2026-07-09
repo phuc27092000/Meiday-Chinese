@@ -14,6 +14,7 @@
 
 <script type="module">
 import { HSK1, HSK2, HSK1_ALL, HSK2_ALL, HSK3, HSK3_ALL, HSK4_ALL, HSK5_ALL, HSK6_ALL, HSK79_ALL } from '/src/data.js';
+import * as Per from '/src/personalization.js';
 
 function toggleWordStrokes(el,hanzi){
   const existing=el.querySelector('.word-strokes');
@@ -91,6 +92,9 @@ function startSpeechRecognition(text,contextKey){
       state.speechResults[contextKey]={match:match,recognized:recognized,original:text,score:match?100:0};
       state.speechRec=null;
       if(match){showToast('Đọc chuẩn! (100đ)','success')}else{showToast('Chưa chính xác, hãy thử lại: '+recognized,'error')}
+      // Save pronunciation to Supabase
+      var lvNum=parseInt((state.level||'hsk1').replace('hsk','').replace('79','7'));
+      Per.savePronunciationResult({hsk_level:isNaN(lvNum)?null:lvNum,context_key:contextKey,text:text,recognized:recognized,score:match?100:0,total_chars:text.length,correct_chars:match?text.length:0});
       render();
     }
   };
@@ -105,6 +109,9 @@ function startSpeechRecognition(text,contextKey){
       var scored=scoreReading(text,allText);
       state.speechResults[contextKey]=scored;state.speechRec=null;state.speechProcessing=null;
       showToast('Kết quả: '+scored.correct+'/'+scored.total+' ký tự đúng ('+scored.score+'%)',scored.score>=80?'success':scored.score>=50?'':'error');
+      // Save pronunciation to Supabase
+      var lvNum=parseInt((state.level||'hsk1').replace('hsk','').replace('79','7'));
+      Per.savePronunciationResult({hsk_level:isNaN(lvNum)?null:lvNum,context_key:contextKey,text:text,recognized:allText,score:scored.score||0,total_chars:scored.total||text.length,correct_chars:scored.correct||0});
       render();
     }else if(isReading){
       try{recognition.start()}catch(e){state.speechRec=null;state.speechProcessing=null;render()}
@@ -445,7 +452,62 @@ function generateLocalWritingData(subMode) {
 const SUPABASE_URL='https://gpmwzeurcwfiyxlomqsa.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbXd6ZXVyY3dmaXl4bG9tcXNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTMwNzIsImV4cCI6MjA5ODAyOTA3Mn0.0G7W1OY6rqPDmzcPpGhNaUiDl6k9K0ijsME-dQjRujk';
 const sb = window.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'flashcard',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,isVIP:false,showUserMenu:false,showMobileMenu:false,_reviewLevel:null,_reviewMode:null,_dictExpanded:null,speechRec:null,speechResults:{},rdPinyinHidden:false,speechProcessing:null};
+
+// ═══ AUTH STATE LISTENER — auto-sync profile on login ═══
+sb.auth.onAuthStateChange(async function(event, session) {
+  if (event === 'SIGNED_IN' && session?.user) {
+    state.isLoggedIn = true;
+    state.user = session.user;
+
+    // Create/update user profile in Supabase
+    var profile = await Per.upsertUserProfile({
+      display_name: session.user.user_metadata?.full_name || '',
+      avatar_url: session.user.user_metadata?.avatar_url || '',
+      is_vip: false
+    });
+    if (profile?.is_vip) state.isVIP = true;
+
+    // Sync local learned words to cloud
+    await Per.syncLocalLearnedToCloud();
+
+    // Load cloud learned words into localStorage
+    var cloudWords = await Per.getLearnedWordsFromCloud();
+    if (cloudWords.length) {
+      var local = getLearnedWords();
+      var merged = [...new Set([...local, ...cloudWords])];
+      localStorage.setItem('subhsk_learned', JSON.stringify(merged));
+    }
+
+    // Load user stats
+    var stats = await Per.getUserStats();
+    state._cloudStats = stats;
+
+    render();
+    showToast('✅ Đăng nhập thành công! Dữ liệu đã đồng bộ.','success');
+  } else if (event === 'SIGNED_OUT') {
+    state.isLoggedIn = false;
+    state.user = null;
+    state.isVIP = false;
+    state._cloudStats = null;
+    render();
+  }
+});
+
+// Check existing session on load
+(async function() {
+  var { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    state.isLoggedIn = true;
+    state.user = session.user;
+    var profile = await Per.getUserProfile();
+    if (profile?.is_vip) state.isVIP = true;
+    var stats = await Per.getUserStats();
+    state._cloudStats = stats;
+    render();
+  }
+})();
+
+let state={tab:'learn',view:'home',rMode:'list',rQuizType:'meaning',level:'hsk1',lessonId:null,mode:'flashcard',fcIndex:0,fcFlipped:false,fcShuffled:[],quizIndex:0,quizScore:0,quizAnswered:false,quizDone:false,quizQuestions:[],writingStep:0,writingShowZh:false,writingSubMode:'short',writingData:null,writingUserInputs:{},writingSubmitted:false,writingLoading:false,writingError:null,writingLevel:null,writingAttempts:{},writingAiFeedback:null,writingFeedbackLoading:false,dictSubtopic:'words',dictSearch:'',isLoggedIn:false,user:null,isVIP:false,showUserMenu:false,showMobileMenu:false,_reviewLevel:null,_reviewMode:null,_dictExpanded:null,speechRec:null,speechResults:{},rdPinyinHidden:false,speechProcessing:null,_cloudStats:null};
 
 // ═══ LOCK SYSTEM: Guest→HSK1, Free→HSK1-2, VIP→ALL ═══
 function getMaxUnlockedLevel(){if(!state.isLoggedIn)return 1;if(!state.isVIP)return 2;return 9;}
@@ -457,11 +519,22 @@ function getAllWords(){return[...HSK1,...HSK2,...HSK3].flatMap(l=>l.words)}
 function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
 function getTotal(arr){return arr.reduce((s,l)=>s+l.words.length,0)}
 
-// ═══ LEARNED WORDS TRACKING ═══
+// ═══ LEARNED WORDS TRACKING (localStorage + Supabase sync) ═══
 function getLearnedWords(){try{return JSON.parse(localStorage.getItem('subhsk_learned')||'[]')}catch(e){return[]}}
 function isWordLearned(hanzi){return getLearnedWords().indexOf(hanzi)>=0}
-function markLearned(hanzi){var a=getLearnedWords();if(a.indexOf(hanzi)<0){a.push(hanzi);localStorage.setItem('subhsk_learned',JSON.stringify(a))}}
-function markUnlearned(hanzi){var a=getLearnedWords().filter(function(x){return x!==hanzi});localStorage.setItem('subhsk_learned',JSON.stringify(a))}
+function markLearned(hanzi){
+  var a=getLearnedWords();
+  if(a.indexOf(hanzi)<0){a.push(hanzi);localStorage.setItem('subhsk_learned',JSON.stringify(a))}
+  // Sync to Supabase
+  var lvNum=parseInt((state.level||'hsk1').replace('hsk','').replace('79','7'));
+  Per.markWordLearnedCloud(hanzi,isNaN(lvNum)?null:lvNum);
+  Per.trackSessionWord();
+}
+function markUnlearned(hanzi){
+  var a=getLearnedWords().filter(function(x){return x!==hanzi});
+  localStorage.setItem('subhsk_learned',JSON.stringify(a));
+  Per.markWordUnlearnedCloud(hanzi);
+}
 
 function renderFooter(){
   return '<footer class="footer"><div class="footer-grid"><div class="footer-col"><h4>SubHSK Chinese</h4><p>Nền tảng học tiếng Trung hiện đại với đầy đủ giáo trình HSK 3.0.</p></div><div class="footer-col"><h4>Liên kết</h4><a data-action="tab-home">Trang chủ</a><a data-action="tab-review">Ôn tập</a><a data-action="tab-dict">Từ điển</a><a data-action="tab-grammar">Ngữ pháp</a></div><div class="footer-col"><h4>Hỗ trợ</h4><a data-action="contact">Trung tâm trợ giúp</a><a data-action="contact">Liên hệ</a><a data-action="contact">Điều khoản</a><a data-action="contact">Bảo mật</a></div><div class="footer-col"><h4>Tải App</h4><div class="footer-qr">'+icon('smartphone',32)+'<br><small>Quét QR để tải</small></div></div></div><div class="footer-bottom"><p>© 2026 SubHSK Chinese. All rights reserved.</p><div class="footer-social">'+icon('facebook',16)+icon('youtube',16)+icon('twitter',16)+'</div></div></footer>';
@@ -1905,21 +1978,36 @@ function renderGrammarAllContent(){
 function renderProfile(){
   if(!state.isLoggedIn) return '<div class="fade-in" style="padding:32px;text-align:center"><h2>Đăng nhập để xem hồ sơ</h2><button class="btn-google" data-action="login" style="margin:16px auto"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg><span>Đăng nhập với Google</span></button></div>';
   var u=state.user;var m=u.user_metadata;
+  var stats=state._cloudStats||{totalLearned:0,streak:0,todayStudied:0,quizCount:0,avgScore:0};
   var totalWords=0;
   if(typeof HSK1_ALL!=='undefined')totalWords+=HSK1_ALL.length;
   if(typeof HSK2_ALL!=='undefined')totalWords+=HSK2_ALL.length;
   if(typeof HSK3_ALL!=='undefined')totalWords+=HSK3_ALL.length;
-  return '<div class="fade-in" style="padding:24px"><div style="text-align:center;margin-bottom:24px"><img src="'+m.avatar_url+'" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--c-primary)"><h2 style="margin:12px 0 4px">'+m.full_name+'</h2><p style="color:var(--c-text-secondary)">'+u.email+'</p></div>'+
-    '<div class="vip-banner" data-action="open-vip" style="margin-bottom:20px">'+
+  if(typeof HSK4_ALL!=='undefined')totalWords+=HSK4_ALL.length;
+  if(typeof HSK5_ALL!=='undefined')totalWords+=HSK5_ALL.length;
+  if(typeof HSK6_ALL!=='undefined')totalWords+=HSK6_ALL.length;
+  if(typeof HSK79_ALL!=='undefined')totalWords+=HSK79_ALL.length;
+
+  var vipBadge=state.isVIP?' <span style="background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:700">'+icon('crown',12)+' VIP</span>':'';
+
+  // Quiz history section (loaded async)
+  var quizHistoryHtml='<div class="profile-menu-item" style="justify-content:center;color:var(--c-text-dim)"><span class="profile-spinner"></span> Đang tải lịch sử...</div>';
+
+  return '<div class="fade-in" style="padding:24px"><div style="text-align:center;margin-bottom:24px"><img src="'+m.avatar_url+'" style="width:80px;height:80px;border-radius:50%;border:3px solid var(--c-primary)"><h2 style="margin:12px 0 4px">'+m.full_name+vipBadge+'</h2><p style="color:var(--c-text-secondary)">'+u.email+'</p></div>'+
+    (state.isVIP?'':'<div class="vip-banner" data-action="open-vip" style="margin-bottom:20px">'+
       '<span class="vip-banner-icon">'+icon('crown',28)+'</span>'+
       '<div class="vip-banner-text"><strong>NÂNG CẤP TÀI KHOẢN VIP</strong><br><span>Mở khóa toàn bộ HSK 3-9 · AI chấm bài · Không giới hạn</span></div>'+
       '<span class="vip-banner-arrow">'+icon('arrow-right',20)+'</span>'+
-    '</div>'+
-    '<div class="profile-stats-grid"><div class="profile-stat-card"><div class="profile-stat-num">'+getLearnedWords().length+'</div><div class="profile-stat-label">Từ đã thuộc</div></div><div class="profile-stat-card"><div class="profile-stat-num">0</div><div class="profile-stat-label">Bài đã hoàn thành</div></div><div class="profile-stat-card"><div class="profile-stat-num">'+(parseInt(localStorage.getItem('subhsk_streak')||'0'))+'</div><div class="profile-stat-label">Ngày liên tiếp</div></div></div><div class="profile-menu">'+
+    '</div>')+
+    '<div class="profile-stats-grid"><div class="profile-stat-card"><div class="profile-stat-num">'+(stats.totalLearned||getLearnedWords().length)+'</div><div class="profile-stat-label">Từ đã thuộc</div></div><div class="profile-stat-card"><div class="profile-stat-num">'+(stats.quizCount||0)+'</div><div class="profile-stat-label">Bài đã hoàn thành</div></div><div class="profile-stat-card"><div class="profile-stat-num">'+(stats.streak||parseInt(localStorage.getItem('subhsk_streak')||'0'))+'</div><div class="profile-stat-label">Ngày liên tiếp</div></div></div>'+
+    '<div class="profile-stats-grid" style="margin-top:8px"><div class="profile-stat-card"><div class="profile-stat-num" style="font-size:20px">'+totalWords+'</div><div class="profile-stat-label">Tổng từ vựng HSK</div></div><div class="profile-stat-card"><div class="profile-stat-num" style="font-size:20px">'+(stats.avgScore||0)+'%</div><div class="profile-stat-label">Điểm TB bài kiểm tra</div></div><div class="profile-stat-card"><div class="profile-stat-num" style="font-size:20px">'+(stats.todayStudied||0)+'</div><div class="profile-stat-label">Từ đã học hôm nay</div></div></div>'+
+    '<div class="profile-menu">'+
     '<div class="profile-menu-item" data-action="go-review">'+icon('rotate-cw',18)+' Ôn tập thông minh</div>'+
     '<div class="profile-menu-item" data-action="open-vip">'+icon('crown',18)+' Nâng cấp VIP</div>'+
     '<div class="profile-menu-item" data-action="tab-grammar">'+icon('book-open',18)+' Ngữ pháp</div>'+
+    '<div class="profile-menu-item" data-action="refresh-stats">'+icon('refresh-cw',18)+' Đồng bộ dữ liệu</div>'+
     '<div class="profile-menu-item" data-action="logout" style="color:var(--c-error);cursor:pointer">'+icon('log-out',18)+' Đăng xuất</div>'+
+    '<div id="profile-quiz-history" style="margin-top:12px">'+quizHistoryHtml+'</div>'+
   '</div></div>';
 }
 
@@ -2072,7 +2160,16 @@ function attachEvents(){
     b.onclick=function(e){e.stopPropagation();state.tab='review';state._reviewLevel=state.level;state._reviewMode='flashcard';render();window.scrollTo({top:0})};
   });
   // ═══ GENERIC HANDLER (all data-action, including auth) ═══
-  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;console.log('[ACTION]',a,b.dataset.mode||'');if(a==='login'){sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});return}if(a==='logout'){sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();return}if(a==='toggle-user-menu'){state.showUserMenu=!state.showUserMenu;render();return}if(a==='profile'){state.tab='profile';state.showUserMenu=false;render();return}if(a==='tab-home'){state.tab='learn';state.view='home';render();window.scrollTo({top:0});return}if(a==='tab-review'){state.tab='review';state._reviewLevel=null;state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='tab-dict'){state.tab='dict';state._dictExpanded=null;render();window.scrollTo({top:0});return}if(a==='tab-grammar'){state.tab='grammar';render();window.scrollTo({top:0});return}if(a==='contact'){showToast('📧 Liên hệ: subhsk.chinese@gmail.com','info');return}if(a==='quick-review'){state.tab='review';state._reviewLevel=state.level||'hsk1';state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='scroll-top'){window.scrollTo({top:0,behavior:'smooth'});return}if(a==='open-vip'){showToast('👑 Nâng cấp VIP để mở khóa toàn bộ tính năng!','info');return}if(a==='go-review'){state.tab='review';state._reviewLevel=state.level;state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='go-review-hero'){state.tab='review';state._reviewLevel='hsk1';state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='review-start-mode'){state._reviewLevel=state._reviewLevel||'hsk1';state._reviewMode=b.dataset.mode;state.quizDone=false;var rvPool;var rl=state._reviewLevel;if(rl==='hsk1')rvPool=HSK1_ALL;else if(rl==='hsk2')rvPool=HSK2_ALL;else if(rl==='hsk3')rvPool=HSK3_ALL;else if(rl==='hsk4')rvPool=typeof HSK4_ALL!=='undefined'?HSK4_ALL:[];else if(rl==='hsk5')rvPool=typeof HSK5_ALL!=='undefined'?HSK5_ALL:[];else if(rl==='hsk6')rvPool=typeof HSK6_ALL!=='undefined'?HSK6_ALL:[];else if(rl==='hsk79')rvPool=typeof HSK79_ALL!=='undefined'?HSK79_ALL:[];else rvPool=HSK1_ALL||[];if(!rvPool||!rvPool.length){console.error('No word pool for level:',state._reviewLevel);rvPool=HSK1_ALL||[]}console.log('review-start-mode:',state._reviewMode,'pool:',rvPool.length);var rvWords=shuffle(rvPool.map(enrichWord)).slice(0,20);state.fcShuffled=rvWords;state.fcIndex=0;state.fcFlipped=false;if(state._reviewMode!=='flashcard'){try{generateSRQuiz(rvWords,state._reviewMode)}catch(e){console.error('generateSRQuiz error:',e.message)}}else state.quizQuestions=[];render();return}if(a==='review-close'){state.mode='flashcard';state._reviewMode=null;state._reviewLevel=null;state.fcShuffled=[];state.quizQuestions=[];state.quizDone=false;state.tab='learn';state.view='home';render();return}if(a==='start-writing'){state.mode='writing';state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingLoading=false;state.writingError=null;state.writingAiFeedback=null;render();return}if(a==='writing-quit'){state.mode='flashcard';state._reviewMode=null;state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingAiFeedback=null;state.fcShuffled=[];state.quizQuestions=[];render();return}if(a==='back'){state.view='level';render()}if(a==='back-home'){state.view='home';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='toggle-stroke'){var card2=b.closest('.fc-card');if(card2){var area2=card2.querySelector('.fc-stroke-container');if(area2){if(area2.style.display==='none'||!area2.style.display){area2.style.display='flex';area2.style.flexWrap='wrap';area2.style.gap='8px';area2.style.justifyContent='center';var w2=state.fcShuffled[state.fcIndex];if(w2&&area2.children.length===0&&typeof HanziWriter!=='undefined'){var chars=(w2.hanzi||w2.h||'').split('');chars.forEach(function(ch){var wrap=document.createElement('div');wrap.style.width='90px';wrap.style.height='90px';area2.appendChild(wrap);try{HanziWriter.create(wrap,ch,{width:90,height:90,padding:5,strokeAnimationSpeed:1,delayBetweenStrokes:200,strokeColor:'#2563EB',radicalColor:'#F97316',showOutline:true,showCharacter:false}).animateCharacter()}catch(ex){wrap.innerHTML='<span style="font-size:50px;font-family:var(--font-cn)">'+ch+'</span>'}})}}else{area2.style.display='none'}}}return}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words.map(enrichWord));state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
+  document.querySelectorAll('[data-action]').forEach(b=>{b.onclick=(e)=>{e.stopPropagation();const a=b.dataset.action;console.log('[ACTION]',a,b.dataset.mode||'');if(a==='login'){sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin}});return}if(a==='logout'){sb.auth.signOut();state.isLoggedIn=false;state.user=null;state.showUserMenu=false;render();return}if(a==='toggle-user-menu'){state.showUserMenu=!state.showUserMenu;render();return}if(a==='profile'){state.tab='profile';state.showUserMenu=false;render();
+    // Load quiz history async
+    Per.getQuizHistory(5).then(function(history){
+      var el=document.getElementById('profile-quiz-history');
+      if(!el||!history.length){if(el)el.innerHTML='<div style="text-align:center;color:var(--c-text-dim);padding:12px">Chưa có bài kiểm tra nào</div>';return}
+      var h='<div style="font-weight:600;margin-bottom:8px;color:var(--c-text)">📊 Lịch sử kiểm tra gần đây</div>';
+      history.forEach(function(q){h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--c-border);font-size:13px"><span>'+q.quiz_mode+' (HSK '+(q.hsk_level||'?')+')</span><span style="font-weight:600;color:'+(q.percentage>=80?'var(--c-success)':q.percentage>=50?'#F59E0B':'var(--c-error)')+'">'+q.score+'/'+q.total+' ('+q.percentage+'%)</span></div>'});
+      el.innerHTML=h;
+    }).catch(function(){});
+    return}if(a==='tab-home'){state.tab='learn';state.view='home';render();window.scrollTo({top:0});return}if(a==='tab-review'){state.tab='review';state._reviewLevel=null;state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='tab-dict'){state.tab='dict';state._dictExpanded=null;render();window.scrollTo({top:0});return}if(a==='tab-grammar'){state.tab='grammar';render();window.scrollTo({top:0});return}if(a==='contact'){showToast('📧 Liên hệ: subhsk.chinese@gmail.com','info');return}if(a==='quick-review'){state.tab='review';state._reviewLevel=state.level||'hsk1';state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='scroll-top'){window.scrollTo({top:0,behavior:'smooth'});return}if(a==='open-vip'){showToast('👑 Nâng cấp VIP để mở khóa toàn bộ tính năng!','info');return}if(a==='refresh-stats'){Per.getUserStats().then(function(s){state._cloudStats=s;showToast('✅ Dữ liệu đã đồng bộ!','success');render()});return}if(a==='go-review'){state.tab='review';state._reviewLevel=state.level;state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='go-review-hero'){state.tab='review';state._reviewLevel='hsk1';state._reviewMode=null;state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0});return}if(a==='review-start-mode'){state._reviewLevel=state._reviewLevel||'hsk1';state._reviewMode=b.dataset.mode;state.quizDone=false;var rvPool;var rl=state._reviewLevel;if(rl==='hsk1')rvPool=HSK1_ALL;else if(rl==='hsk2')rvPool=HSK2_ALL;else if(rl==='hsk3')rvPool=HSK3_ALL;else if(rl==='hsk4')rvPool=typeof HSK4_ALL!=='undefined'?HSK4_ALL:[];else if(rl==='hsk5')rvPool=typeof HSK5_ALL!=='undefined'?HSK5_ALL:[];else if(rl==='hsk6')rvPool=typeof HSK6_ALL!=='undefined'?HSK6_ALL:[];else if(rl==='hsk79')rvPool=typeof HSK79_ALL!=='undefined'?HSK79_ALL:[];else rvPool=HSK1_ALL||[];if(!rvPool||!rvPool.length){console.error('No word pool for level:',state._reviewLevel);rvPool=HSK1_ALL||[]}console.log('review-start-mode:',state._reviewMode,'pool:',rvPool.length);var rvWords=shuffle(rvPool.map(enrichWord)).slice(0,20);state.fcShuffled=rvWords;state.fcIndex=0;state.fcFlipped=false;if(state._reviewMode!=='flashcard'){try{generateSRQuiz(rvWords,state._reviewMode)}catch(e){console.error('generateSRQuiz error:',e.message)}}else state.quizQuestions=[];render();return}if(a==='review-close'){state.mode='flashcard';state._reviewMode=null;state._reviewLevel=null;state.fcShuffled=[];state.quizQuestions=[];state.quizDone=false;state.tab='learn';state.view='home';render();return}if(a==='start-writing'){state.mode='writing';state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingLoading=false;state.writingError=null;state.writingAiFeedback=null;render();return}if(a==='writing-quit'){state.mode='flashcard';state._reviewMode=null;state.writingData=null;state.writingUserInputs={};state.writingSubmitted=false;state.writingAiFeedback=null;state.fcShuffled=[];state.quizQuestions=[];render();return}if(a==='back'){state.view='level';render()}if(a==='back-home'){state.view='home';render()}if(a==='flip'){state.fcFlipped=!state.fcFlipped;render()}if(a==='fc-prev'){state.fcIndex--;state.fcFlipped=false;render()}if(a==='fc-next'){state.fcIndex++;state.fcFlipped=false;render()}if(a==='toggle-stroke'){var card2=b.closest('.fc-card');if(card2){var area2=card2.querySelector('.fc-stroke-container');if(area2){if(area2.style.display==='none'||!area2.style.display){area2.style.display='flex';area2.style.flexWrap='wrap';area2.style.gap='8px';area2.style.justifyContent='center';var w2=state.fcShuffled[state.fcIndex];if(w2&&area2.children.length===0&&typeof HanziWriter!=='undefined'){var chars=(w2.hanzi||w2.h||'').split('');chars.forEach(function(ch){var wrap=document.createElement('div');wrap.style.width='90px';wrap.style.height='90px';area2.appendChild(wrap);try{HanziWriter.create(wrap,ch,{width:90,height:90,padding:5,strokeAnimationSpeed:1,delayBetweenStrokes:200,strokeColor:'#2563EB',radicalColor:'#F97316',showOutline:true,showCharacter:false}).animateCharacter()}catch(ex){wrap.innerHTML='<span style="font-size:50px;font-family:var(--font-cn)">'+ch+'</span>'}})}}else{area2.style.display='none'}}}return}if(a==='fc-shuffle'){const l=getLessons().find(x=>x.id===state.lessonId);state.fcShuffled=shuffle(l.words.map(enrichWord));state.fcIndex=0;state.fcFlipped=false;render()}if(a==='quiz-restart'){const l=getLessons().find(x=>x.id===state.lessonId);generateQuiz(l);render()}}});
   document.querySelectorAll('[data-mode]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.mode;if(state.mode==='flashcard')state.fcShuffled=[];if(state.mode==='quiz')state.quizQuestions=[];render()}});
   document.querySelectorAll('[data-hsk79set]').forEach(c=>{c.onclick=()=>{state.view='hsk79set';state.lessonId=parseInt(c.dataset.hsk79set);state.mode='list';state.fcShuffled=[];state.quizQuestions=[];render();window.scrollTo({top:0,behavior:'smooth'})}});
   document.querySelectorAll('[data-m79]').forEach(b=>{b.onclick=()=>{state.mode=b.dataset.m79;state.fcShuffled=[];state.quizQuestions=[];render()}});
@@ -2126,6 +2223,19 @@ function attachEvents(){
       const feedback = await callDeepSeekGrading(state.writingSubMode, state.writingData, state.writingUserInputs);
       state.writingAiFeedback = feedback;
       state.writingFeedbackLoading = false;
+
+      // Save writing practice to Supabase
+      var lvNum=parseInt((state.writingLevel||state.level||'hsk1').replace('hsk','').replace('79','7'));
+      var avgScore=feedback&&feedback.scores?Math.round(feedback.scores.reduce(function(a,b){return a+b},0)/feedback.scores.length):null;
+      Per.saveWritingPractice({
+        hsk_level:isNaN(lvNum)?null:lvNum,
+        sub_mode:state.writingSubMode,
+        sentences:state.writingData,
+        user_inputs:state.writingUserInputs,
+        feedback:feedback,
+        score:avgScore
+      });
+
       render();
     } catch(e) {
       console.error('submit-all error:', e);
@@ -2174,7 +2284,14 @@ function attachEvents(){
       setTimeout(function(){startSpeechRecognition(text,key)},200);
     };
   });
-  document.querySelectorAll('[data-quiz-opt]').forEach(b=>{b.onclick=()=>{if(state.quizAnswered)return;const i=parseInt(b.dataset.quizOpt);const q=state.quizQuestions[state.quizIndex];q.sel=i;state.quizAnswered=true;if(i===q.ci)state.quizScore++;render();setTimeout(()=>{if(state.quizIndex<state.quizQuestions.length-1){state.quizIndex++;state.quizAnswered=false;render()}else{state.quizDone=true;render()}},1200)}});
+  document.querySelectorAll('[data-quiz-opt]').forEach(b=>{b.onclick=()=>{if(state.quizAnswered)return;const i=parseInt(b.dataset.quizOpt);const q=state.quizQuestions[state.quizIndex];q.sel=i;state.quizAnswered=true;if(i===q.ci)state.quizScore++;render();setTimeout(()=>{if(state.quizIndex<state.quizQuestions.length-1){state.quizIndex++;state.quizAnswered=false;render()}else{state.quizDone=true;
+    // Save quiz result to Supabase
+    var wrong=state.quizQuestions.filter(function(q){return q.sel!==q.ci&&q.sel>=0});
+    var wrongWords=wrong.map(function(q){return q.prompt||(q.options?q.options[q.ci]:'')||''});
+    var lvNum=parseInt((state._reviewLevel||state.level||'hsk1').replace('hsk','').replace('79','7'));
+    Per.saveQuizResult({hsk_level:isNaN(lvNum)?null:lvNum,quiz_mode:state._reviewMode||'quiz',score:state.quizScore,total:state.quizQuestions.length,wrong_words:wrongWords});
+    Per.logDailyActivity(state.quizQuestions.length,Math.round(state.quizQuestions.length/3));
+    render()}},1200)}});
 }
 
 document.addEventListener('keydown',function(e){
